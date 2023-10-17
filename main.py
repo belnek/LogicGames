@@ -37,7 +37,7 @@ class Main(QWidget):
         self.target.setStyleSheet("background-color:red;border-radius:5px;")
         self.target.resize(40, 40)
         self.target.move(10, 330)
-        self.makeShoot(self.tank, self.target)
+        self.makeShoot(self.tank, self.target).connect(lambda: self.boom(self.target))
         #self.makeShoot((self.tank.x, self.tank.y), self.target).connect(lambda: self.boom(self.target))
 
     def boom(self, target):
