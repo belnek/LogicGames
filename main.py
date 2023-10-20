@@ -4,16 +4,18 @@ import time
 import traceback
 from threading import Timer
 from os.path import abspath
-
+import PyQt5_stylesheets
+from PyQt5 import uic, QtCore
 from PyQt5.QtCore import QPropertyAnimation, QEasingCurve, QPoint, QParallelAnimationGroup, QTimer, QRect, QSize, \
     QSequentialAnimationGroup, Qt
 from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QMainWindow
+from PyQt5.uic import pyuic
 
 from LogicGames.Tank import Tank
 
 
-class Main(QWidget):
+class Main(QMainWindow):
     def __init__(self):
         super().__init__()
         self.anim_group = None
@@ -23,9 +25,12 @@ class Main(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.resize(600, 600)
+        uipath = os.path.join(os.path.dirname(__file__), "ui.ui")
+        uic.loadUi(uipath, self)
+        app.setStyleSheet(PyQt5_stylesheets.load_stylesheet_pyqt5(style="style_navy"))
 
-        self.q = QPixmap("C:\\Users\\Белеко Никита\\PycharmProjects\\logicGames\\LogicGames\\tank.png").scaled(60, 30)
+        self.setFixedSize(727, 886)
+
         # Отображаем содержимое QPixmap в объекте QLabel
         self.tank = Tank(self)
         self.tank.init(10, 10)
@@ -37,11 +42,25 @@ class Main(QWidget):
         self.target.setStyleSheet("background-color:red;border-radius:5px;")
         self.target.resize(40, 40)
         self.target.move(10, 330)
+        self.verticalScroll.valueChanged.connect(self.on_value_vertical_changed)
+        self.horizontalScroll.valueChanged.connect(self.on_value_horizontal_changed)
+
         self.makeShoot(self.tank, self.target).connect(lambda: self.boom(self.target))
         #self.makeShoot((self.tank.x, self.tank.y), self.target).connect(lambda: self.boom(self.target))
 
+    def on_value_vertical_changed(self):
+        value = self.verticalScroll.value()
+        self.lcdVertical.display(value)
+
+    def on_value_horizontal_changed(self):
+        value = self.horizontalScroll.value()
+        self.lcdHorizontal.display(value)
+
     def boom(self, target):
         target.setStyleSheet("background-color:black;border-radius:5px;")
+
+    def aiming(self):
+        QtCore.QTimer.set
 
     def makeShoot(self, start, target):
         self.child = QWidget(self)
