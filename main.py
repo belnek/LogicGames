@@ -12,7 +12,7 @@ from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QMainWindow
 from PyQt5.uic import pyuic
 
-from LogicGames.Tank import Tank
+from Tank import Tank
 
 
 class Main(QMainWindow):
@@ -59,8 +59,7 @@ class Main(QMainWindow):
     def boom(self, target):
         target.setStyleSheet("background-color:black;border-radius:5px;")
 
-    def aiming(self):
-        QtCore.QTimer.set
+
 
     def makeShoot(self, start, target):
         self.child = QWidget(self)
