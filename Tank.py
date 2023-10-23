@@ -15,10 +15,9 @@ class Tank(QLabel):
         # Отображаем содержимое QPixmap в объекте QLabel
         self.setPixmap(self.pixmap)
         self.move(self.x, self.y)
-
-
-
-
+        self.selected = False
+        self.angleX = 0
+        self.angleY = 0
 
     def rotate_180(self):
         image = QImage(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(80, 50)
@@ -29,3 +28,19 @@ class Tank(QLabel):
 
         self.setPixmap(pixmap)
         self.player = False
+
+    @property
+    def selected(self):
+        return self.selected
+
+    @selected.setter
+    def selected(self, selected):
+        self.selected = selected
+        if self.selected:
+            self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tankSelected.png")).scaled(80, 50)
+            # Отображаем содержимое QPixmap в объекте QLabel
+            self.setPixmap(self.pixmap)
+        else:
+            self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(80, 50)
+            # Отображаем содержимое QPixmap в объекте QLabel
+            self.setPixmap(self.pixmap)

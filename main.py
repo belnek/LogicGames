@@ -11,7 +11,7 @@ from PyQt5.QtCore import QPropertyAnimation, QEasingCurve, QPoint, QParallelAnim
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QMainWindow
 from PyQt5.uic import pyuic
-
+from math import *
 from Tank import Tank
 
 
@@ -21,7 +21,10 @@ class Main(QMainWindow):
         self.anim_group = None
         self.anim = QPropertyAnimation(None, b"pos")
         self.anim2 = QPropertyAnimation(None, b"pos")
-        self.child = None
+        self.g = 9.8
+        self.shootSpeed = 65
+        self.currentTank = Tank()
+        self.bullet = None
         self.initUI()
 
     def initUI(self):
@@ -33,20 +36,16 @@ class Main(QMainWindow):
 
         # Отображаем содержимое QPixmap в объекте QLabel
         self.tank = Tank(self)
-        self.tank.init(10, 10)
-        self.tank.rotate_180()
-
+        self.tank.init(520, 680)
 
         # scaled_pixmap = pixmap.scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio
-        self.target = QWidget(self)
-        self.target.setStyleSheet("background-color:red;border-radius:5px;")
-        self.target.resize(40, 40)
-        self.target.move(10, 330)
-        self.verticalScroll.valueChanged.connect(self.on_value_vertical_changed)
-        self.horizontalScroll.valueChanged.connect(self.on_value_horizontal_changed)
 
-        self.makeShoot(self.tank, self.target).connect(lambda: self.boom(self.target))
-        #self.makeShoot((self.tank.x, self.tank.y), self.target).connect(lambda: self.boom(self.target))
+        self.verticalScroll.valueChanged.connect(self.on_value_vertical_changed)
+
+        self.horizontalScroll.valueChanged.connect(self.on_value_horizontal_changed)
+        self.shootButton.clicked.connect(lambda: self.makeShoot(self.tank).connect(lambda: self.boom()))
+
+        # self.makeShoot((self.tank.x, self.tank.y), self.target).connect(lambda: self.boom(self.target))
 
     def on_value_vertical_changed(self):
         value = self.verticalScroll.value()
@@ -56,26 +55,33 @@ class Main(QMainWindow):
         value = self.horizontalScroll.value()
         self.lcdHorizontal.display(value)
 
-    def boom(self, target):
-        target.setStyleSheet("background-color:black;border-radius:5px;")
+    def boom(self):
+        pass
 
+    def makeShoot(self, start):
+        self.bullet = QWidget(self)
+        self.bullet.setStyleSheet("background-color:black;border-radius:5px;")
+        self.bullet.resize(10, 10)
+        self.bullet.move(int(start.x + 80 / 2), int(start.y + 50 / 2))
+        self.bullet.show()
+        tx, ty, t, h = self.solveTargetXY(start, self.shootSpeed, self.verticalScroll.value(),
+                                       self.horizontalScroll.value())
+        print(tx, ty)
 
-
-    def makeShoot(self, start, target):
-        self.child = QWidget(self)
-        self.child.setStyleSheet("background-color:black;border-radius:5px;")
-        self.child.resize(10, 10)
-        self.child.move(int(start.x + start.rect().width() / 2), int(start.y + start.rect().height() / 2))
-        self.anim = QPropertyAnimation(self.child, b"pos")
+        t = int(t * 1000 / 3)
+        print(t)
+        print(QPoint(int(tx + 80 / 2), int(ty + 50 / 2)))
+        self.anim = QPropertyAnimation(self.bullet, b"pos")
         self.anim.setEndValue(
-            QPoint(int(target.x() + target.rect().width() / 2), int(target.y() + target.rect().height() / 2)))
-        self.anim.setDuration(3300)
-        self.anim2 = QPropertyAnimation(self.child, b"size")
-        self.anim2.setEndValue(QSize(20, 20))
-        self.anim2.setDuration(1650)
-        self.anim3 = QPropertyAnimation(self.child, b"size")
+            QPoint(int(tx + 80 / 2), int(ty + 50 / 2)))
+        self.anim.setDuration(t)
+        self.anim.start()
+        self.anim2 = QPropertyAnimation(self.bullet, b"size")
+        self.anim2.setEndValue(QSize(int(10+(h//10)), int(10+(h//10))))
+        self.anim2.setDuration(t // 2)
+        self.anim3 = QPropertyAnimation(self.bullet, b"size")
         self.anim3.setEndValue(QSize(10, 10))
-        self.anim3.setDuration(1650)
+        self.anim3.setDuration(t // 2)
         self.anim_group = QParallelAnimationGroup()
         self.anim_group2 = QSequentialAnimationGroup()
         self.anim_group2.addAnimation(self.anim2)
@@ -84,6 +90,20 @@ class Main(QMainWindow):
         self.anim_group.addAnimation(self.anim_group2)
         self.anim_group.start()
         return self.anim_group.finished
+
+    def solveTargetXY(self, start, speed, angleY, angleX):
+        sx = start.x
+        sy = start.y
+        t = (2 * speed * sin(angleY * pi / 180)) / self.g
+        r = speed * cos(angleY * pi / 180) * t
+        maxx = r * cos((angleX - 90) * pi / 180)
+        maxy = r * sin((angleX - 90) * pi / 180)
+
+        tx = sx + maxx
+        ty = sy + maxy
+        h = (speed * speed * sin(angleY * pi / 180) * sin(angleY * pi / 180)) / (2 * self.g)
+
+        return tx, ty, t, h
 
 
 def excepthook(self, exc_type, exc_value, exc_tb):
