@@ -18,6 +18,8 @@ class Tank(QLabel):
         self.selected = False
         self.angleX = 0
         self.angleY = 0
+        self.isAlive = True
+        self.shootsEstimated = 3
 
     def rotate_180(self):
         image = QImage(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(80, 50)

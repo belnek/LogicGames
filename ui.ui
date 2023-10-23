@@ -2,6 +2,17 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>727</width>
+    <height>886</height>
+   </rect>
+  </property>
   <property name="sizePolicy">
    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
     <horstretch>0</horstretch>
@@ -1314,6 +1325,9 @@ QDateEdit::down-arrow:focus
     </size>
    </property>
    <widget class="QWidget" name="widget" native="true">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -1491,6 +1505,19 @@ background-color: rgb(49, 54, 59);</string>
       </item>
      </layout>
     </widget>
+   </widget>
+   <widget class="QWidget" name="widget_2" native="true">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>560</y>
+      <width>711</width>
+      <height>151</height>
+     </rect>
+    </property>
    </widget>
   </widget>
  </widget>
