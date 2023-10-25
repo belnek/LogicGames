@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QMainWin
 from PyQt5.uic import pyuic
 from math import *
 
-from Bullet import Bullet
+from ShootFunnel import ShootFunnel
 from Tank import Tank
 
 
@@ -26,7 +26,9 @@ class Main(QMainWindow):
         self.g = 9.8
         self.shootSpeed = 65
         self.currentTank = Tank()
+        self.tanks = list()
         self.bullet = None
+        self.mainWin = self
         self.initUI()
 
     def initUI(self):
@@ -43,11 +45,13 @@ class Main(QMainWindow):
         self.tank1 = Tank(self)
         self.tank1.init(320, 680)
         self.tank1.selectedNow.connect(lambda: self.tankchanged(self.tank1))
+        self.tanks = {self.tank, self.tank1}
         # scaled_pixmap = pixmap.scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio
 
         self.verticalScroll.valueChanged.connect(self.on_value_vertical_changed)
 
         self.horizontalScroll.valueChanged.connect(self.on_value_horizontal_changed)
+
         self.shootButton.clicked.connect(lambda: self.makeShoot(self.currentTank))
 
         # self.makeShoot((self.tank.x, self.tank.y), self.target).connect(lambda: self.boom(self.target))
@@ -56,24 +60,82 @@ class Main(QMainWindow):
         value = self.verticalScroll.value()
         self.lcdVertical.display(value)
 
-    def tankchanged(self, tank: Tank):
-        if self.currentTank.isInit:
-            self.currentTank.selected = not self.currentTank.selected
-        self.currentTank = tank
     def on_value_horizontal_changed(self):
         value = self.horizontalScroll.value()
         self.lcdHorizontal.display(value)
 
-    def boom(self, bullet):
-        pass
-
-    def makeShoot(self, start):
+    def tankchanged(self, tank: Tank):
         if self.currentTank.isInit:
-            self.bullet = Bullett(self)
+            self.currentTank.selected = not self.currentTank.selected
+            self.currentTank.angleX = self.lcdHorizontal.value()
+            self.currentTank.angleY = self.lcdVertical.value()
+
+        self.currentTank = tank
+        self.horizontalScroll.setValue(int(self.currentTank.angleX))
+        self.lcdHorizontal.display(self.currentTank.angleX)
+        self.verticalScroll.setValue(int(self.currentTank.angleY))
+        self.lcdVertical.display(self.currentTank.angleY)
+
+    def boom(self, bullet: QWidget):
+        ul = bullet.geometry().topLeft()
+        br = bullet.geometry().bottomRight()
+        isTank = False
+        shootedTank = Tank(self)
+        for tank in self.tanks:
+            ult = tank.geometry().topLeft()
+            brt = tank.geometry().bottomRight()
+            print(ul, br, ult, brt)
+            if ult.x() <= ul.x() <= brt.x() and ult.y() <= ul.y() <= brt.y() and ult.x() <= br.x() <= brt.x() and ult.y() <= br.y() <= brt.y():
+                isTank = True
+                shootedTank = tank
+        if isTank:
+            print("Попал")
+
+            shootedTank.shooted()
+            self.layout().removeWidget(bullet)
+            bullet.deleteLater()
+
+            bullet.destroy(True)
+        else:
+            print("Промах")
+            funnel = ShootFunnel(self)
+            funnel.init(bullet.x() - int(bullet.width()), bullet.y())
+            self.layout().addWidget(funnel)
+            funnel.show()
+            self.layout().removeWidget(bullet)
+            bullet.deleteLater()
+
+            bullet.destroy(True)
+        self.widget.show()
+
+    def tick(self, start):
+        if self.currentTank.angleX != self.horizontalScroll.value():
+            if self.horizontalScroll.value() > 0:
+                self.currentTank.rotate(1)
+                self.currentTank.angleX += 1
+                QTimer.singleShot(100, lambda: self.tick(start))
+            elif self.horizontalScroll.value() < 0:
+                self.currentTank.rotate(-1)
+                self.currentTank.angleX -= 1
+                QTimer.singleShot(100, lambda: self.tick(start))
+            else:
+                if self.currentTank.angleX > 0:
+                    self.currentTank.rotate(-1)
+                    self.currentTank.angleX -= 1
+                    QTimer.singleShot(100, lambda: self.tick(start))
+                else:
+                    self.currentTank.rotate(1)
+                    self.currentTank.angleX += 1
+                    QTimer.singleShot(100, lambda: self.tick(start))
+
+        else:
+            self.currentTank.shootsEstimated -= 1
+            self.bullet = QWidget(self)
             self.bullet.setStyleSheet("background-color:black;border-radius:5px;")
             self.bullet.resize(10, 10)
             self.bullet.move(int(start.x + 80 / 2), int(start.y + 50 / 2))
             self.bullet.show()
+
             tx, ty, t, h = self.solveTargetXY(start, self.shootSpeed, self.verticalScroll.value(),
                                               self.horizontalScroll.value())
             print(tx, ty)
@@ -85,7 +147,7 @@ class Main(QMainWindow):
             self.anim.setEndValue(
                 QPoint(int(tx + 80 / 2), int(ty + 50 / 2)))
             self.anim.setDuration(t)
-            self.anim.start()
+            self.anim.finished.connect(lambda: self.boom(self.bullet))
             self.anim2 = QPropertyAnimation(self.bullet, b"size")
             self.anim2.setEndValue(QSize(int(10 + (h // 10)), int(10 + (h // 10))))
             self.anim2.setDuration(t // 2)
@@ -99,7 +161,12 @@ class Main(QMainWindow):
             self.anim_group.addAnimation(self.anim)
             self.anim_group.addAnimation(self.anim_group2)
             self.anim_group.start()
-            self.anim_group.finished.connect(lambda: self.boom(self.bullet))
+
+    def makeShoot(self, start):
+        if self.currentTank.isInit:
+            if self.currentTank.shootsEstimated > 0:
+                self.widget.hide()
+                QTimer.singleShot(200, lambda : self.tick(start))
 
     def solveTargetXY(self, start, speed, angleY, angleX):
         sx = start.x

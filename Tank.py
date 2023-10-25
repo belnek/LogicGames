@@ -36,15 +36,30 @@ class Tank(QLabel):
     def rotate_180(self):
         image = QImage(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(80, 50)
 
-        rotated_image = image.transformed(QTransform().rotate(180))
+        rotated_image = image.transformed(QTransform().rotate(180 + self.angleX))
 
         pixmap = QPixmap.fromImage(rotated_image)
 
         self.setPixmap(pixmap)
         self.player = not self.player
 
+    def rotate(self, angle):
+        image = QImage(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(80, 50)
+
+        rotated_image = image.transformed(QTransform().rotate(self.angleX + angle))
+
+        pixmap = QPixmap.fromImage(rotated_image)
+
+        self.setPixmap(pixmap)
     def mousePressEvent(self, ev):
-        self.clicked.emit()
+        if self.isAlive:
+            self.clicked.emit()
+
+    def shooted(self):
+        self.isAlive = False
+        self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tankShooted.png")).scaled(80, 50).transformed(QTransform().rotate(self.angleX))
+        # Отображаем содержимое QPixmap в объекте QLabel
+        self.setPixmap(self.pixmap)
 
     @property
     def selected(self):
@@ -55,12 +70,12 @@ class Tank(QLabel):
         self._selected = nselected
         if nselected:
             print(1)
-            self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tankSelected.png")).scaled(80, 50)
+            self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tankSelected.png")).scaled(80, 50).transformed(QTransform().rotate(self.angleX))
             # Отображаем содержимое QPixmap в объекте QLabel
             self.setPixmap(self.pixmap)
         else:
             print(0)
 
-            self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(80, 50)
+            self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(80, 50).transformed(QTransform().rotate(self.angleX))
             # Отображаем содержимое QPixmap в объекте QLabel
             self.setPixmap(self.pixmap)
