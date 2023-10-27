@@ -26,9 +26,10 @@ class Main(QMainWindow):
         self.g = 9.8
         self.shootSpeed = 65
         self.currentTank = Tank()
-        self.tanks = list()
         self.bullet = None
         self.mainWin = self
+        self.playerTanks = list()
+        self.AITanks = list()
         self.initUI()
 
     def initUI(self):
@@ -67,8 +68,7 @@ class Main(QMainWindow):
     def tankchanged(self, tank: Tank):
         if self.currentTank.isInit:
             self.currentTank.selected = not self.currentTank.selected
-            self.currentTank.angleX = self.lcdHorizontal.value()
-            self.currentTank.angleY = self.lcdVertical.value()
+
 
         self.currentTank = tank
         self.horizontalScroll.setValue(int(self.currentTank.angleX))
@@ -113,20 +113,20 @@ class Main(QMainWindow):
             if self.horizontalScroll.value() > 0:
                 self.currentTank.rotate(1)
                 self.currentTank.angleX += 1
-                QTimer.singleShot(100, lambda: self.tick(start))
+                QTimer.singleShot(50, lambda: self.tick(start))
             elif self.horizontalScroll.value() < 0:
                 self.currentTank.rotate(-1)
                 self.currentTank.angleX -= 1
-                QTimer.singleShot(100, lambda: self.tick(start))
+                QTimer.singleShot(50, lambda: self.tick(start))
             else:
                 if self.currentTank.angleX > 0:
                     self.currentTank.rotate(-1)
                     self.currentTank.angleX -= 1
-                    QTimer.singleShot(100, lambda: self.tick(start))
+                    QTimer.singleShot(50, lambda: self.tick(start))
                 else:
                     self.currentTank.rotate(1)
                     self.currentTank.angleX += 1
-                    QTimer.singleShot(100, lambda: self.tick(start))
+                    QTimer.singleShot(50, lambda: self.tick(start))
 
         else:
             self.currentTank.shootsEstimated -= 1
@@ -164,9 +164,10 @@ class Main(QMainWindow):
 
     def makeShoot(self, start):
         if self.currentTank.isInit:
-            if self.currentTank.shootsEstimated > 0:
+            if self.currentTank.shootsEstimated > 0 and self.verticalScroll.value() != 0:
+                self.currentTank.angleY = self.verticalScroll.value()
                 self.widget.hide()
-                QTimer.singleShot(200, lambda : self.tick(start))
+                QTimer.singleShot(50, lambda : self.tick(start))
 
     def solveTargetXY(self, start, speed, angleY, angleX):
         sx = start.x
