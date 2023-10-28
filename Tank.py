@@ -35,7 +35,7 @@ class Tank(QLabel):
         self.player = True
         self.x = x
         self.y = y
-        self.resize(self.sizeX, self.sizeY)
+        self.resize(self.sizeX + 10, self.sizeY + 10)
         self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(self.sizeX, self.sizeY)
         # Отображаем содержимое QPixmap в объекте QLabel
         self.setPixmap(self.pixmap)
