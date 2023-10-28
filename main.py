@@ -1,4 +1,5 @@
 import os
+import random
 import sys
 import time
 import traceback
@@ -8,7 +9,7 @@ import PyQt5_stylesheets
 from PyQt5 import uic, QtCore
 from PyQt5.QtCore import QPropertyAnimation, QEasingCurve, QPoint, QParallelAnimationGroup, QTimer, QRect, QSize, \
     QSequentialAnimationGroup, Qt
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QMainWindow
 from PyQt5.uic import pyuic
 from math import *
@@ -29,6 +30,8 @@ class Main(QMainWindow):
         self.bullet = None
         self.mainWin = self
         self.playerTanks = list()
+
+        print(self.playerTanks)
         self.AITanks = list()
         self.initUI()
 
@@ -38,15 +41,23 @@ class Main(QMainWindow):
         app.setStyleSheet(PyQt5_stylesheets.load_stylesheet_pyqt5(style="style_navy"))
 
         self.setFixedSize(727, 886)
+        self.playerTanks = [Tank(self) for i in range(20)]
+        c=0
+        for i in self.playerTanks:
+            i.init(300, 300, c)
+
+            i.selectedNow.connect(lambda: self.tankchanged())
+
+            c+=1
 
         # Отображаем содержимое QPixmap в объекте QLabel
-        self.tank = Tank(self)
-        self.tank.init(520, 680)
-        self.tank.selectedNow.connect(lambda: self.tankchanged(self.tank))
+
+        '''
         self.tank1 = Tank(self)
         self.tank1.init(320, 680)
         self.tank1.selectedNow.connect(lambda: self.tankchanged(self.tank1))
-        self.tanks = {self.tank, self.tank1}
+        self.playerTanks = {self.tank, self.tank1}'''
+        self.setPlayersTanks()
         # scaled_pixmap = pixmap.scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio
 
         self.verticalScroll.valueChanged.connect(self.on_value_vertical_changed)
@@ -65,12 +76,57 @@ class Main(QMainWindow):
         value = self.horizontalScroll.value()
         self.lcdHorizontal.display(value)
 
-    def tankchanged(self, tank: Tank):
+    def setPlayersTanks(self):
+        for tank in self.playerTanks:
+            tank.move(random.randint(20, 700), random.randint(380, 670))
+            # print(i)
+            ul = tank.geometry().topLeft()
+            br = tank.geometry().bottomRight()
+            isCol = False
+            isCol2 = False
+            for tankk in self.playerTanks:
+                if tank == tankk:
+                    continue
+                ult = tankk.geometry().topLeft()
+                brt = tankk.geometry().bottomRight()
+                if ult.x() <= ul.x() <= brt.x() and ult.y() <= ul.y() <= brt.y() and ult.x() <= br.x() <= brt.x() and ult.y() <= br.y() <= brt.y():
+                    isCol = True
+            if isCol:
+                isCol2 = True
+            while isCol2:
+                tank.move(random.randint(20, 700), random.randint(380, 670))
+                ul = tank.geometry().topLeft()
+                br = tank.geometry().bottomRight()
+                isCol = False
+                for tankk in self.playerTanks:
+                    if tank == tankk:
+                        continue
+                    ult = tankk.geometry().topLeft()
+                    brt = tankk.geometry().bottomRight()
+                    if ult.x() <= ul.x() <= brt.x() and ult.y() <= ul.y() <= brt.y() and ult.x() <= br.x() <= brt.x() and ult.y() <= br.y() <= brt.y():
+                        isCol = True
+                if isCol:
+                    isCol2 = True
+                else:
+                    isCol2 = False
+        for i in self.playerTanks:
+            i.setImg()
+            i.show()
+            print(i.id)
+        print(self.playerTanks)
+    def setAITanks(self):
+        pass
+
+    def tankchanged(self):
+        tank = self.sender()
+        print(tank)
+        for i in self.playerTanks:
+            print(i.id)
         if self.currentTank.isInit:
             self.currentTank.selected = not self.currentTank.selected
-
-
+            print(self.currentTank.id)
         self.currentTank = tank
+        print(self.currentTank.id)
         self.horizontalScroll.setValue(int(self.currentTank.angleX))
         self.lcdHorizontal.display(self.currentTank.angleX)
         self.verticalScroll.setValue(int(self.currentTank.angleY))
@@ -81,15 +137,13 @@ class Main(QMainWindow):
         br = bullet.geometry().bottomRight()
         isTank = False
         shootedTank = Tank(self)
-        for tank in self.tanks:
+        for tank in self.playerTanks:
             ult = tank.geometry().topLeft()
             brt = tank.geometry().bottomRight()
-            print(ul, br, ult, brt)
             if ult.x() <= ul.x() <= brt.x() and ult.y() <= ul.y() <= brt.y() and ult.x() <= br.x() <= brt.x() and ult.y() <= br.y() <= brt.y():
                 isTank = True
                 shootedTank = tank
         if isTank:
-            print("Попал")
 
             shootedTank.shooted()
             self.layout().removeWidget(bullet)
@@ -97,7 +151,6 @@ class Main(QMainWindow):
 
             bullet.destroy(True)
         else:
-            print("Промах")
             funnel = ShootFunnel(self)
             funnel.init(bullet.x() - int(bullet.width()), bullet.y())
             self.layout().addWidget(funnel)
@@ -138,11 +191,8 @@ class Main(QMainWindow):
 
             tx, ty, t, h = self.solveTargetXY(start, self.shootSpeed, self.verticalScroll.value(),
                                               self.horizontalScroll.value())
-            print(tx, ty)
 
             t = int(t * 1000 / 3)
-            print(t)
-            print(QPoint(int(tx + 80 / 2), int(ty + 50 / 2)))
             self.anim = QPropertyAnimation(self.bullet, b"pos")
             self.anim.setEndValue(
                 QPoint(int(tx + 80 / 2), int(ty + 50 / 2)))
@@ -167,7 +217,7 @@ class Main(QMainWindow):
             if self.currentTank.shootsEstimated > 0 and self.verticalScroll.value() != 0:
                 self.currentTank.angleY = self.verticalScroll.value()
                 self.widget.hide()
-                QTimer.singleShot(50, lambda : self.tick(start))
+                QTimer.singleShot(50, lambda: self.tick(start))
 
     def solveTargetXY(self, start, speed, angleY, angleX):
         sx = start.x
