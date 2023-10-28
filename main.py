@@ -38,17 +38,15 @@ class Main(QMainWindow):
     def initUI(self):
         uipath = os.path.join(os.path.dirname(__file__), "ui.ui")
         uic.loadUi(uipath, self)
-        app.setStyleSheet(PyQt5_stylesheets.load_stylesheet_pyqt5(style="style_navy"))
+        # app.setStyleSheet(PyQt5_stylesheets.load_stylesheet_pyqt5(style="style_navy"))
 
         self.setFixedSize(727, 886)
-        self.playerTanks = [Tank(self) for i in range(20)]
-        c=0
+        self.playerTanks = [Tank(self) for i in range(30)]
+        c = 0
         for i in self.playerTanks:
             i.init(300, 300, c)
 
-            i.selectedNow.connect(lambda: self.tankchanged())
-
-            c+=1
+            c += 1
 
         # Отображаем содержимое QPixmap в объекте QLabel
 
@@ -77,56 +75,46 @@ class Main(QMainWindow):
         self.lcdHorizontal.display(value)
 
     def setPlayersTanks(self):
+
+        width = self.playerTanks[0].width()
+        height = self.playerTanks[0].height()
+        segmentsx = int((660) / width)
+        segmentsy = int((670 - 390) / height)
+        listOfPotencialSegments = list()
+        for i in range(segmentsx):
+            random.seed(random.randint(0, 10000000))
+
+            for j in range(segmentsy):
+                i += random.randint(0, 2)
+                j += random.randint(0, 1)
+
+                listOfPotencialSegments.append((i, j))
+        n = len(self.playerTanks)
+        random.seed(random.randint(0, 10000000))
+
+        segments = random.sample(listOfPotencialSegments, n)
+        print(segments)
+
+        newSegments = list(tuple())
+        for i in segments:
+            xx = i[0] * width
+            yy = i[1] * height + 390
+            newSegments.append((xx, yy))
+        c = 0
         for tank in self.playerTanks:
-            tank.move(random.randint(20, 700), random.randint(380, 670))
-            # print(i)
-            ul = tank.geometry().topLeft()
-            br = tank.geometry().bottomRight()
-            isCol = False
-            isCol2 = False
-            for tankk in self.playerTanks:
-                if tank == tankk:
-                    continue
-                ult = tankk.geometry().topLeft()
-                brt = tankk.geometry().bottomRight()
-                if ult.x() <= ul.x() <= brt.x() and ult.y() <= ul.y() <= brt.y() and ult.x() <= br.x() <= brt.x() and ult.y() <= br.y() <= brt.y():
-                    isCol = True
-            if isCol:
-                isCol2 = True
-            while isCol2:
-                tank.move(random.randint(20, 700), random.randint(380, 670))
-                ul = tank.geometry().topLeft()
-                br = tank.geometry().bottomRight()
-                isCol = False
-                for tankk in self.playerTanks:
-                    if tank == tankk:
-                        continue
-                    ult = tankk.geometry().topLeft()
-                    brt = tankk.geometry().bottomRight()
-                    if ult.x() <= ul.x() <= brt.x() and ult.y() <= ul.y() <= brt.y() and ult.x() <= br.x() <= brt.x() and ult.y() <= br.y() <= brt.y():
-                        isCol = True
-                if isCol:
-                    isCol2 = True
-                else:
-                    isCol2 = False
-        for i in self.playerTanks:
-            i.setImg()
-            i.show()
-            print(i.id)
-        print(self.playerTanks)
+            tank.setting(*newSegments[c], tank.id)
+            c += 1
+            tank.selectedNow.connect(lambda: self.tankchanged())
+
     def setAITanks(self):
         pass
 
     def tankchanged(self):
         tank = self.sender()
-        print(tank)
-        for i in self.playerTanks:
-            print(i.id)
         if self.currentTank.isInit:
             self.currentTank.selected = not self.currentTank.selected
-            print(self.currentTank.id)
         self.currentTank = tank
-        print(self.currentTank.id)
+        print(self.currentTank.x, self.currentTank.y)
         self.horizontalScroll.setValue(int(self.currentTank.angleX))
         self.lcdHorizontal.display(self.currentTank.angleX)
         self.verticalScroll.setValue(int(self.currentTank.angleY))
@@ -186,7 +174,8 @@ class Main(QMainWindow):
             self.bullet = QWidget(self)
             self.bullet.setStyleSheet("background-color:black;border-radius:5px;")
             self.bullet.resize(10, 10)
-            self.bullet.move(int(start.x + 80 / 2), int(start.y + 50 / 2))
+            self.bullet.move(int(self.currentTank.x + self.currentTank.width() / 2),
+                             int(self.currentTank.y + self.currentTank.height() / 2))
             self.bullet.show()
 
             tx, ty, t, h = self.solveTargetXY(start, self.shootSpeed, self.verticalScroll.value(),
@@ -195,7 +184,7 @@ class Main(QMainWindow):
             t = int(t * 1000 / 3)
             self.anim = QPropertyAnimation(self.bullet, b"pos")
             self.anim.setEndValue(
-                QPoint(int(tx + 80 / 2), int(ty + 50 / 2)))
+                QPoint(int(tx + self.currentTank.width() / 2), int(ty + self.currentTank.height() / 2)))
             self.anim.setDuration(t)
             self.anim.finished.connect(lambda: self.boom(self.bullet))
             self.anim2 = QPropertyAnimation(self.bullet, b"size")

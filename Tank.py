@@ -10,13 +10,15 @@ class Tank(QLabel):
     selectedNow = pyqtSignal()
     isInit = False
 
-    def init(self, x, y, id):
+    def init(self, x, y, idd):
 
         self.player = True
         self.x = x
         self.y = y
-        self.resize(80, 50)
-        self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(80, 50)
+        self.sizeX = 43
+        self.sizeY = 36
+        self.resize(self.sizeX + 10, self.sizeY + 10)
+        self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(self.sizeX, self.sizeY)
         # Отображаем содержимое QPixmap в объекте QLabel
         self.setPixmap(self.pixmap)
         self.move(self.x, self.y)
@@ -26,15 +28,15 @@ class Tank(QLabel):
         self.isAlive = True
         self.shootsEstimated = 3
         self.isInit = True
-        self.id = id
+        self.id = idd
         self.clicked.connect(lambda: self.tankClicked())
 
-    def setting(self, x, y, id):
+    def setting(self, x, y, idd):
         self.player = True
         self.x = x
         self.y = y
-        self.resize(80, 50)
-        self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(80, 50)
+        self.resize(self.sizeX, self.sizeY)
+        self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(self.sizeX, self.sizeY)
         # Отображаем содержимое QPixmap в объекте QLabel
         self.setPixmap(self.pixmap)
         self.move(self.x, self.y)
@@ -44,10 +46,10 @@ class Tank(QLabel):
         self.isAlive = True
         self.shootsEstimated = 3
         self.isInit = True
-        self.id = id
+        self.id = idd
 
     def setImg(self):
-        self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(80, 50)
+        self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(self.sizeX, self.sizeY)
         # Отображаем содержимое QPixmap в объекте QLabel
         self.setPixmap(self.pixmap)
     def tankClicked(self):
@@ -55,7 +57,7 @@ class Tank(QLabel):
         self.selectedNow.emit()
 
     def rotate_180(self):
-        image = QImage(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(80, 50)
+        image = QImage(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(self.sizeX, self.sizeY)
 
         rotated_image = image.transformed(QTransform().rotate(180 + self.angleX))
 
@@ -65,8 +67,7 @@ class Tank(QLabel):
         self.player = not self.player
 
     def rotate(self, angle):
-        image = QImage(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(80, 50)
-
+        image = QImage(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(self.sizeX, self.sizeY)
         rotated_image = image.transformed(QTransform().rotate(self.angleX + angle))
 
         pixmap = QPixmap.fromImage(rotated_image)
@@ -79,7 +80,7 @@ class Tank(QLabel):
 
     def shooted(self):
         self.isAlive = False
-        self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tankShooted.png")).scaled(80, 50).transformed(
+        self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tankShooted.png")).scaled(self.sizeX, self.sizeY).transformed(
             QTransform().rotate(self.angleX))
         # Отображаем содержимое QPixmap в объекте QLabel
         self.setPixmap(self.pixmap)
@@ -92,14 +93,13 @@ class Tank(QLabel):
     def selected(self, nselected):
         self._selected = nselected
         if nselected:
-            self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tankSelected.png")).scaled(80,
-                                                                                                      50).transformed(
+            self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tankSelected.png")).scaled(self.sizeX, self.sizeY).transformed(
                 QTransform().rotate(self.angleX))
             # Отображаем содержимое QPixmap в объекте QLabel
             self.setPixmap(self.pixmap)
         else:
 
-            self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(80, 50).transformed(
+            self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(self.sizeX, self.sizeY).transformed(
                 QTransform().rotate(self.angleX))
             # Отображаем содержимое QPixmap в объекте QLabel
             self.setPixmap(self.pixmap)
