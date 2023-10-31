@@ -111,6 +111,7 @@ class Main(QMainWindow):
 
     def tankchanged(self):
         tank = self.sender()
+
         if self.currentTank.isInit:
             self.currentTank.selected = not self.currentTank.selected
         self.currentTank = tank
@@ -125,6 +126,7 @@ class Main(QMainWindow):
         br = bullet.geometry().bottomRight()
         isTank = False
         shootedTank = Tank(self)
+
         for tank in self.playerTanks:
             ult = tank.geometry().topLeft()
             brt = tank.geometry().bottomRight()
@@ -147,6 +149,8 @@ class Main(QMainWindow):
             bullet.deleteLater()
 
             bullet.destroy(True)
+        for tank in self.playerTanks:
+            tank.isShooting = False
         self.widget.show()
 
     def tick(self, start):
@@ -202,7 +206,10 @@ class Main(QMainWindow):
             self.anim_group.start()
 
     def makeShoot(self, start):
+
         if self.currentTank.isInit:
+            for t in self.playerTanks:
+                t.isShooting = True
             if self.currentTank.shootsEstimated > 0 and self.verticalScroll.value() != 0:
                 self.currentTank.angleY = self.verticalScroll.value()
                 self.widget.hide()
