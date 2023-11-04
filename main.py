@@ -30,31 +30,36 @@ class Main(QMainWindow):
         self.bullet = None
         self.mainWin = self
         self.playerTanks = list()
-
-        print(self.playerTanks)
         self.AITanks = list()
         self.initUI()
 
     def initUI(self):
         uipath = os.path.join(os.path.dirname(__file__), "ui.ui")
         uic.loadUi(uipath, self)
-        # app.setStyleSheet(PyQt5_stylesheets.load_stylesheet_pyqt5(style="style_navy"))
 
         self.setFixedSize(727, 886)
         self.playerTanks = [Tank(self) for i in range(30)]
+        self.AITanks = [Tank(self) for i in range(30)]
         c = 0
         for i in self.playerTanks:
             i.init(300, 300, c)
 
             c += 1
 
+        for i in self.AITanks:
+            i.init(300, 300, c)
+            c += 1
         # Отображаем содержимое QPixmap в объекте QLabel
 
         '''
         self.tank1 = Tank(self)
         self.tank1.init(320, 680)
         self.tank1.selectedNow.connect(lambda: self.tankchanged(self.tank1))
+        
+        
         self.playerTanks = {self.tank, self.tank1}'''
+        self.setAITanks()
+
         self.setPlayersTanks()
         # scaled_pixmap = pixmap.scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio
 
@@ -78,7 +83,7 @@ class Main(QMainWindow):
 
         width = self.playerTanks[0].width()
         height = self.playerTanks[0].height()
-        segmentsx = int((660) / width)
+        segmentsx = int(660 / width)
         segmentsy = int((670 - 390) / height)
         listOfPotencialSegments = list()
         for i in range(segmentsx):
@@ -93,7 +98,6 @@ class Main(QMainWindow):
         random.seed(random.randint(0, 10000000))
 
         segments = random.sample(listOfPotencialSegments, n)
-        print(segments)
 
         newSegments = list(tuple())
         for i in segments:
@@ -105,6 +109,41 @@ class Main(QMainWindow):
             tank.setting(*newSegments[c], tank.id)
             c += 1
             tank.selectedNow.connect(lambda: self.tankchanged())
+
+    def setAITanks(self):
+        print("s")
+        print("asfasf")
+
+        width = self.AITanks[0].width()
+        height = self.AITanks[0].height()
+        segmentsx = int(660 / width)
+        segmentsy = int((390) / height)
+        listOfPotencialSegments = list()
+        print("s")
+        for i in range(segmentsx):
+            random.seed(random.randint(0, 10000000))
+
+            for j in range(segmentsy):
+                i += random.randint(0, 2)
+                j += random.randint(0, 1)
+
+                listOfPotencialSegments.append((i, j))
+        n = len(self.AITanks)
+        random.seed(random.randint(0, 10000000))
+
+        segments = random.sample(listOfPotencialSegments, n)
+        print(segments)
+
+        newSegments = list(tuple())
+        for i in segments:
+            xx = i[0] * width
+            yy = i[1] * height
+            newSegments.append((xx, yy))
+        c = 0
+        for tank in self.AITanks:
+            tank.setting(*newSegments[c], tank.id)
+            tank.rotate_180()
+            c += 1
 
     def setAITanks(self):
         pass
@@ -151,7 +190,13 @@ class Main(QMainWindow):
             bullet.destroy(True)
         for tank in self.playerTanks:
             tank.isShooting = False
+        self.currentTank.selected = False
+        self.currentTank = Tank()
         self.widget.show()
+        self.horizontalScroll.setValue(0)
+        self.lcdHorizontal.display(0)
+        self.verticalScroll.setValue(0)
+        self.lcdVertical.display(0)
 
     def tick(self, start):
         if self.currentTank.angleX != self.horizontalScroll.value():
