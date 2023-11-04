@@ -60,9 +60,8 @@ class Tank(QLabel):
 
     def rotate_180(self):
         image = QImage(os.path.join(os.path.dirname(__file__), "tank.png")).scaled(self.sizeX, self.sizeY)
-
-        rotated_image = image.transformed(QTransform().rotate(180 + self.angleX))
-
+        self.angleX = 180
+        rotated_image = image.transformed(QTransform().rotate(self.angleX))
         pixmap = QPixmap.fromImage(rotated_image)
 
         self.setPixmap(pixmap)
@@ -82,9 +81,8 @@ class Tank(QLabel):
 
     def shooted(self):
         self.isAlive = False
-        self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tankShooted.png")).scaled(self.sizeX,
-                                                                                                 self.sizeY).transformed(
-            QTransform().rotate(self.angleX))
+        self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "tankShooted.png")).scaled(self.sizeX, self.sizeY)\
+            .transformed(QTransform().rotate(self.angleX))
         # Отображаем содержимое QPixmap в объекте QLabel
         self.setPixmap(self.pixmap)
 

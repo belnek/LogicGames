@@ -14,11 +14,11 @@ class ShootFunnel(QLabel):
 
         self.x = x
         self.y = y
-        self.resize(30, 30)
-        self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "ShootFunnel.png")).scaled(30, 30)
+        self.resize(10, 10)
+        self.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "ShootFunnel.png")).scaled(10, 10)
         # Отображаем содержимое QPixmap в объекте QLabel
         self.setPixmap(self.pixmap)
-        self.move(self.x, self.y)
+        self.move(self.x + 10, self.y + 5)
         self.isInit = True
 
 

@@ -58,9 +58,9 @@ class Main(QMainWindow):
         
         
         self.playerTanks = {self.tank, self.tank1}'''
-        self.setAITanks()
 
         self.setPlayersTanks()
+        self.setAITanks()
         # scaled_pixmap = pixmap.scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio
 
         self.verticalScroll.valueChanged.connect(self.on_value_vertical_changed)
@@ -109,6 +109,7 @@ class Main(QMainWindow):
             tank.setting(*newSegments[c], tank.id)
             c += 1
             tank.selectedNow.connect(lambda: self.tankchanged())
+        self.setAITanks()
 
     def setAITanks(self):
         print("s")
@@ -117,7 +118,7 @@ class Main(QMainWindow):
         width = self.AITanks[0].width()
         height = self.AITanks[0].height()
         segmentsx = int(660 / width)
-        segmentsy = int((390) / height)
+        segmentsy = int((360) / height)
         listOfPotencialSegments = list()
         print("s")
         for i in range(segmentsx):
@@ -145,9 +146,6 @@ class Main(QMainWindow):
             tank.rotate_180()
             c += 1
 
-    def setAITanks(self):
-        pass
-
     def tankchanged(self):
         tank = self.sender()
 
@@ -172,6 +170,14 @@ class Main(QMainWindow):
             if ult.x() <= ul.x() <= brt.x() and ult.y() <= ul.y() <= brt.y() and ult.x() <= br.x() <= brt.x() and ult.y() <= br.y() <= brt.y():
                 isTank = True
                 shootedTank = tank
+
+        for tank in self.AITanks:
+            ult = tank.geometry().topLeft()
+            brt = tank.geometry().bottomRight()
+            if ult.x() <= ul.x() <= brt.x() and ult.y() <= ul.y() <= brt.y() and ult.x() <= br.x() <= brt.x() and ult.y() <= br.y() <= brt.y():
+                isTank = True
+                shootedTank = tank
+
         if isTank:
 
             shootedTank.shooted()
@@ -223,7 +229,7 @@ class Main(QMainWindow):
             self.bullet = QWidget(self)
             self.bullet.setStyleSheet("background-color:black;border-radius:5px;")
             self.bullet.resize(10, 10)
-            self.bullet.move(int(self.currentTank.x + self.currentTank.width() / 2),
+            self.bullet.move(int(self.currentTank.x + self.currentTank.width() / 3),
                              int(self.currentTank.y + self.currentTank.height() / 2))
             self.bullet.show()
 
@@ -233,7 +239,7 @@ class Main(QMainWindow):
             t = int(t * 1000 / 3)
             self.anim = QPropertyAnimation(self.bullet, b"pos")
             self.anim.setEndValue(
-                QPoint(int(tx + self.currentTank.width() / 2), int(ty + self.currentTank.height() / 2)))
+                QPoint(int(tx + self.currentTank.width() / 2), int(ty + self.currentTank.height() / 3)))
             self.anim.setDuration(t)
             self.anim.finished.connect(lambda: self.boom(self.bullet))
             self.anim2 = QPropertyAnimation(self.bullet, b"size")
