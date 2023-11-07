@@ -325,7 +325,7 @@ class Main(QMainWindow):
             sh = currentAITank.shootsEstimated
         isHitNum = random.randint(0, 100)
         print(isHitNum)
-        if isHitNum >= 40:
+        if isHitNum >= 20:
             recurs = 0
             angleX = random.randint(-90, 90)
             angleY = random.randint(0, 90)
