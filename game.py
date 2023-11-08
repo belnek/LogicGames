@@ -1,29 +1,25 @@
 import os
 import random
-import sys
-import time
 import traceback
-from threading import Timer
-from os.path import abspath
-import PyQt5_stylesheets
-from PyQt5 import uic, QtCore
-from PyQt5.QtCore import QPropertyAnimation, QEasingCurve, QPoint, QParallelAnimationGroup, QTimer, QRect, QSize, \
-    QSequentialAnimationGroup, Qt
-from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QMainWindow
-from PyQt5.uic import pyuic
+
+from PyQt5 import uic
+from PyQt5.QtCore import QPropertyAnimation, QPoint, QParallelAnimationGroup, QTimer, QSize, \
+    QSequentialAnimationGroup
+from PyQt5.QtWidgets import QWidget, QMainWindow, QAction, QDialog
 from math import *
 
 from ShootFunnel import ShootFunnel
 from Tank import Tank
 
 
-class Main(QMainWindow):
-    def __init__(self):
-        super().__init__()
+class Game(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.anim_group = None
         self.anim = QPropertyAnimation(None, b"pos")
         self.anim2 = QPropertyAnimation(None, b"pos")
+        self.winAnimation = QPropertyAnimation(self, b'windowOpacity')
+        self.winAnimation.setDuration(600)
         self.g = 9.8
         self.shootSpeed = 65
         self.currentTank = Tank()
@@ -34,11 +30,34 @@ class Main(QMainWindow):
         self.initUI()
         self.isPlayerTurn = True
 
+    def doShow(self):
+        try:
+            self.winAnimation.finished.disconnect(self.hide)
+        except:
+            pass
+        self.winAnimation.stop()
+        # Диапазон прозрачности постепенно увеличивается от 0 до 1.
+        self.winAnimation.setStartValue(0)
+        self.winAnimation.setEndValue(1)
+        self.winAnimation.start()
+
+    def doClose(self):
+        self.winAnimation.stop()
+        self.winAnimation.finished.connect(self.hide)  # Закройте окно, когда анимация будет завершена
+        # Диапазон прозрачности постепенно уменьшается с 1 до 0.
+        self.winAnimation.setStartValue(1)
+        self.winAnimation.setEndValue(0)
+        self.winAnimation.start()
+
     def initUI(self):
+        self.doShow()
         uipath = os.path.join(os.path.dirname(__file__), "ui.ui")
         uic.loadUi(uipath, self)
 
-        # self.setFixedSize(727, 886)
+        self.setFixedSize(727, 886)
+        finish = QAction("Quit", self)
+
+        finish.triggered.connect(self.closeEvent)
         self.playerTanks = [Tank(self) for i in range(30)]
         self.AITanks = [Tank(self) for i in range(30)]
         c = 0
@@ -72,6 +91,12 @@ class Main(QMainWindow):
 
         # self.makeShoot((self.tank.x, self.tank.y), self.target).connect(lambda: self.boom(self.target))
 
+    def closeEvent(self, event):
+        print("skgoghasjklghsdfg")
+        self.parent().showWin()
+        self.doClose()
+        event.ignore()
+
     def on_value_vertical_changed(self):
         value = self.verticalScroll.value()
         self.lcdVertical.display(value)
@@ -104,6 +129,8 @@ class Main(QMainWindow):
 
                 j += jj
                 listOfPotencialSegments.append((i, j))
+        listOfPotencialSegments = list(set(listOfPotencialSegments))
+        print(listOfPotencialSegments)
         n = len(self.playerTanks)
         random.seed(random.randint(0, 10000000))
 
@@ -127,7 +154,7 @@ class Main(QMainWindow):
 
         width = self.AITanks[0].width()
         height = self.AITanks[0].height()
-        segmentsx = int(500 / width)
+        segmentsx = int(660 / width)
         segmentsy = int((360) / height)
         listOfPotencialSegments = list()
         print("s")
@@ -148,6 +175,8 @@ class Main(QMainWindow):
 
                 j += jj
                 listOfPotencialSegments.append((i, j))
+        print(len(listOfPotencialSegments))
+        listOfPotencialSegments = list(set(listOfPotencialSegments))
         n = len(self.AITanks)
         random.seed(random.randint(0, 10000000))
 
@@ -237,30 +266,41 @@ class Main(QMainWindow):
         self.lcdVertical.display(0)
         shootings = 0
         playerTanks = 0
+        print("Turn - ", self.isPlayerTurn)
         if self.isPlayerTurn:
             self.widget.hide()
             for tank in self.playerTanks:
                 shootings += tank.shootsEstimated
+            print("shoots Player - ", shootings)
             if shootings == 0 and len(self.AITanks) > 0:
 
                 if len(self.playerTanks) > 0:
-                    print(f"Игра окончена! У вас осталось {len(self.playerTanks)} танков и не осталось снярядов. У соперника осталось {len(self.AITanks)}")
-                else:
-                    print(f"Игра окончена! У вас не осталось танков. У соперника осталось {len(self.AITanks)}")
+                    print(
+                        f"Игра окончена! У вас осталось {len(self.playerTanks)} танков и не осталось снярядов. У соперника осталось {len(self.AITanks)} танков")
+
             if len(self.AITanks) == 0:
-                print(f"Вы победили! Вы уничтожили все танки соперника. У вас осталось {len(self.playerTanks)}")
+                print(f"Вы победили! Вы уничтожили все танки соперника. У вас осталось {len(self.playerTanks)} танков")
             shootings = 0
             for tank in self.AITanks:
                 shootings += tank.shootsEstimated
+            print("shoots AI - ", shootings)
+
             if shootings == 0:
-                print(f"Вы победили! Соперник сдался, так как у него закончились снаряды. У вас осталось {len(self.playerTanks)}")
+                print(
+                    f"Вы победили! Соперник сдался, так как у него закончились снаряды. У вас осталось {len(self.playerTanks)} танков")
             self.isPlayerTurn = False
 
             self.AITurn()
         else:
+            if len(self.playerTanks) == 0:
+                print(f"Игра окончена! У вас не осталось танков. У соперника осталось {len(self.AITanks)} танков")
             for tank in self.AITanks:
                 shootings += tank.shootsEstimated
+            print("shoots AI - ", shootings)
 
+            if shootings == 0:
+                print(
+                    f"Вы победили! Соперник сдался, так как у него закончились снаряды. У вас осталось {len(self.playerTanks)} танков")
             self.isPlayerTurn = True
 
     def tick(self, start, angleX):
@@ -421,12 +461,3 @@ class Main(QMainWindow):
 def excepthook(self, exc_type, exc_value, exc_tb):
     tb = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
     print("Oбнаружена ошибка !:", tb)
-
-
-if __name__ == '__main__':
-    sys.excepthook = excepthook
-
-    app = QApplication(sys.argv)
-    ex = Main()
-    ex.show()
-    sys.exit(app.exec())

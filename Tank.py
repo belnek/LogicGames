@@ -54,7 +54,7 @@ class Tank(QLabel):
         self.setPixmap(self.pixmap)
 
     def tankClicked(self):
-        if not self.isShooting:
+        if not self.isShooting or self.shootsEstimated > 0:
             self.selected = not self._selected
             self.selectedNow.emit()
 
