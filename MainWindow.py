@@ -1,30 +1,35 @@
 import os
 import sys
+import threading
 import traceback
 
 from PyQt5 import uic
-from PyQt5.QtCore import QPropertyAnimation
+from PyQt5.QtCore import QPropertyAnimation, pyqtSignal
 from PyQt5.QtGui import QFontDatabase, QFont, QPixmap
-from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QButtonGroup, QAction
+from PyQt5.QtWidgets import QMainWindow, QApplication, QAction
 
-from game import Game
+from src.classes.LoadingDialog import LoadingDialog
+from src.classes.game import Game
 
 
 class MainWin(QMainWindow):
+    loading = pyqtSignal()
+
     def __init__(self):
         super().__init__()
         self.initUI()
+        self.path = __file__
 
     def initUI(self):
-        uipath = os.path.join(os.path.dirname(__file__), "main.ui")
+        uipath = os.path.join(os.path.dirname(__file__), "src/ui/main.ui")
         uic.loadUi(uipath, self)
         self.setFixedSize(727, 886)
         showevent = QAction("Show", self)
         showevent.triggered.connect(self.showEvent)
 
-        finish = QAction("Quit", self)
-        finish.triggered.connect(self.closeEvent)
-        self.ttfId = QFontDatabase.addApplicationFont("minettf.ttf")
+        self.finish = QAction("Quit", self)
+        self.finish.triggered.connect(self.closeEvent)
+        self.ttfId = QFontDatabase.addApplicationFont("src/ttf/minettf.ttf")
         self.family = QFontDatabase.applicationFontFamilies(self.ttfId)[0]
         self.font().setFamily(self.family)
         self.labelf = QFont(self.family)
@@ -35,14 +40,21 @@ class MainWin(QMainWindow):
         for b in self.buttonsGroup.buttons():
             b.setFont(self.buttonsFont)
         self.startButton.clicked.connect(self.doClose)
-        self.LogoPixmap = QPixmap(os.path.join(os.path.dirname(__file__), "logocompany2.png"))
+        self.LogoPixmap = QPixmap(os.path.join(os.path.dirname(__file__), "src/images/logocompany2.png"))
         self.logo.setPixmap(self.LogoPixmap)
         self.animation = QPropertyAnimation(self, b'windowOpacity')
         self.animation.setDuration(600)
+        self.bb = False
         self.doShow()
 
     def doShow(self):
         print("a")
+        self.show()
+        try:
+            if self.game.isEnabled():
+                self.game.destroy()
+        except Exception:
+            pass
         try:
             self.animation.finished.disconnect(self.start)
         except:
@@ -67,7 +79,8 @@ class MainWin(QMainWindow):
 
     def doCloseAll(self):
         self.animation.stop()
-        self.animation.finished.connect(sys.exit)  # Закройте окно, когда анимация будет завершена
+
+        self.animation.finished.connect(self.close)  # Закройте окно, когда анимация будет завершена
         # Диапазон прозрачности постепенно уменьшается с 1 до 0.
         self.animation.setStartValue(1)
         self.animation.setEndValue(0)
@@ -75,14 +88,37 @@ class MainWin(QMainWindow):
 
     def closeEvent(self, event):
         print("skgoghasjklghsdfg")
-        self.doCloseAll()
-        event.ignore()
+        if not self.bb:
+            self.bb = True
+            self.doCloseAll()
+            event.ignore()
+        else:
+            self.hide()
+            event.accept()
 
     def start(self):
-        self.game = Game(self)
+        self.hide()
+        self.loadingDialog = LoadingDialog(self)
+        self.loadingDialog.show()
+        self.loading.connect(self.loadingComplete)
+        threading.Thread(target= lambda: self.loadingStarted(self), daemon=True).start()
+
+        # self.loadingDialog.doShow()
 
         # self.hide()
+
+    def loadingStarted(self, parent):
+        self.game = Game(parent)
+        self.game.loadingFinished.connect(self.loading.emit)
+        self.game.initUI()
+
+    def loadingComplete(self):
+        print("asd")
+        self.loadingDialog.doClose()
+        self.game.setParent(self)
+        print(self)
         self.game.show()
+        self.game.doShow()
 
 
 def excepthook(self, exc_type, exc_value, exc_tb):

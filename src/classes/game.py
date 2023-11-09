@@ -4,15 +4,17 @@ import traceback
 
 from PyQt5 import uic
 from PyQt5.QtCore import QPropertyAnimation, QPoint, QParallelAnimationGroup, QTimer, QSize, \
-    QSequentialAnimationGroup
+    QSequentialAnimationGroup, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QMainWindow, QAction, QDialog
 from math import *
 
-from ShootFunnel import ShootFunnel
-from Tank import Tank
+from src.classes.ShootFunnel import ShootFunnel
+from src.classes.Tank import Tank
 
 
 class Game(QMainWindow):
+    loadingFinished = pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.anim_group = None
@@ -27,10 +29,12 @@ class Game(QMainWindow):
         self.mainWin = self
         self.playerTanks = list()
         self.AITanks = list()
-        self.initUI()
         self.isPlayerTurn = True
+        self.parentt = None
+        self.bb = False
 
     def doShow(self):
+        self.parentt = self.sender()
         try:
             self.winAnimation.finished.disconnect(self.hide)
         except:
@@ -43,15 +47,16 @@ class Game(QMainWindow):
 
     def doClose(self):
         self.winAnimation.stop()
-        self.winAnimation.finished.connect(self.hide)  # Закройте окно, когда анимация будет завершена
+        self.bb = True
+
+        self.winAnimation.finished.connect(self.close)  # Закройте окно, когда анимация будет завершена
         # Диапазон прозрачности постепенно уменьшается с 1 до 0.
         self.winAnimation.setStartValue(1)
         self.winAnimation.setEndValue(0)
         self.winAnimation.start()
 
     def initUI(self):
-        self.doShow()
-        uipath = os.path.join(os.path.dirname(__file__), "ui.ui")
+        uipath = os.path.join(os.path.dirname(__file__), "../ui/ui.ui")
         uic.loadUi(uipath, self)
 
         self.setFixedSize(727, 886)
@@ -88,14 +93,17 @@ class Game(QMainWindow):
         self.horizontalScroll.valueChanged.connect(self.on_value_horizontal_changed)
 
         self.shootButton.clicked.connect(lambda: self.makeShoot(self.currentTank))
-
+        self.loadingFinished.emit()
         # self.makeShoot((self.tank.x, self.tank.y), self.target).connect(lambda: self.boom(self.target))
 
     def closeEvent(self, event):
         print("skgoghasjklghsdfg")
-        self.parent().showWin()
-        self.doClose()
-        event.ignore()
+        if not self.bb:
+            self.parentt.showWin()
+            self.doClose()
+            event.ignore()
+        else:
+            event.accept()
 
     def on_value_vertical_changed(self):
         value = self.verticalScroll.value()
