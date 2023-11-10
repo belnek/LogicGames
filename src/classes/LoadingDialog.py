@@ -9,7 +9,7 @@ from PyQt5.uic.properties import QtGui
 
 class LoadingDialog(QMainWindow):
     def __init__(self, parent=None):
-        super().__init__(parent=parent)
+        super().__init__(parent)
         self.initUI()
 
     def initUI(self):
@@ -18,13 +18,13 @@ class LoadingDialog(QMainWindow):
         self.setFixedSize(400, 300)
         showevent = QAction("Show", self)
         showevent.triggered.connect(self.showEvent)
+        self.setWindowTitle("Загрузка...")
+
         self.animation = QPropertyAnimation(self, b'windowOpacity')
         self.animation.setDuration(600)
         gif = QMovie(os.path.join(os.path.dirname(__file__), "loading.gif"))  # !!!
-        gif.setScaledSize(QSize(70, 70))
+        gif.setScaledSize(QSize(150, 150))
         self.loading.setMovie(gif)
-        self.l = QLabel(self)
-        self.l.setMovie(gif)
         gif.start()
         gif.setParent(self)
 

@@ -26,7 +26,7 @@ class MainWin(QMainWindow):
         self.setFixedSize(727, 886)
         showevent = QAction("Show", self)
         showevent.triggered.connect(self.showEvent)
-
+        self.setWindowTitle("Танковая битва")
         self.finish = QAction("Quit", self)
         self.finish.triggered.connect(self.closeEvent)
         self.ttfId = QFontDatabase.addApplicationFont("src/ttf/minettf.ttf")
@@ -97,26 +97,27 @@ class MainWin(QMainWindow):
             event.accept()
 
     def start(self):
-        self.hide()
-        self.loadingDialog = LoadingDialog(self)
+        self.loadingDialog = LoadingDialog(parent=self)
         self.loadingDialog.show()
+
+        #self.hide()
         self.loading.connect(self.loadingComplete)
-        self.loadingStarted(self)
+        self.loadingStarted()
         # self.loadingDialog.doShow()
 
         # self.hide()
 
-    def loadingStarted(self, parent):
-        self.game = Game(self)
+    def loadingStarted(self):
+        self.game = Game(parent=self)
         self.game.loadingFinished.connect(self.loading.emit)
         self.game.initUI()
 
     def loadingComplete(self):
         print("asd")
+        self.game.doShow()
+        self.game.show()
         self.loadingDialog.doClose()
         print(self)
-        self.game.show()
-        self.game.doShow()
 
 
 def excepthook(self, exc_type, exc_value, exc_tb):

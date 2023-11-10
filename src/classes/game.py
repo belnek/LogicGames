@@ -18,12 +18,14 @@ class Game(QMainWindow):
     loadingFinished = pyqtSignal()
     setPlayerTanksComplete = pyqtSignal(list)
     setAITanksComplete = pyqtSignal(list)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.anim_group = None
         self.anim = QPropertyAnimation(None, b"pos")
         self.anim2 = QPropertyAnimation(None, b"pos")
         self.winAnimation = QPropertyAnimation(self, b'windowOpacity')
+
         self.winAnimation.setDuration(600)
         self.g = 9.8
         self.shootSpeed = 65
@@ -65,10 +67,11 @@ class Game(QMainWindow):
 
         self.setFixedSize(727, 886)
         finish = QAction("Quit", self)
-
         finish.triggered.connect(self.closeEvent)
-        self.playerTanks = [Tank(self) for i in range(1)]
-        self.AITanks = [Tank(self) for i in range(1)]
+        self.setWindowTitle("Танковая битва")
+
+        self.playerTanks = [Tank(self) for i in range(30)]
+        self.AITanks = [Tank(self) for i in range(30)]
         c = 0
         for i in self.playerTanks:
             i.init(300, 300, c)
@@ -101,7 +104,7 @@ class Game(QMainWindow):
     def closeEvent(self, event):
         print("skgoghasjklghsdfg")
         if not self.bb:
-            self.parentt.showWin()
+            self.parent().showWin()
             self.doClose()
             event.ignore()
         else:
@@ -130,8 +133,8 @@ class Game(QMainWindow):
             c += 1
             tank.selectedNow.connect(lambda: self.tankchanged())
         self.setAITanksComplete.connect(self.setAITanksCompleteFunc)
-        threading.Thread(target=lambda: self.setAITanksWorker(self.AITanks[0].width(), self.AITanks[0].height()), daemon=True).start()
-
+        threading.Thread(target=lambda: self.setAITanksWorker(self.AITanks[0].width(), self.AITanks[0].height()),
+                         daemon=True).start()
 
     def playersTanksWorker(self, width, height):
         time.sleep(1)
@@ -305,7 +308,8 @@ class Game(QMainWindow):
             if len(self.AITanks) == 0:
                 box = QMessageBox()
                 box.setIcon(QMessageBox.Information)
-                box.setText(f"Вы победили! Вы уничтожили все танки соперника. У вас осталось {len(self.playerTanks)} танков")
+                box.setText(
+                    f"Вы победили! Вы уничтожили все танки соперника. У вас осталось {len(self.playerTanks)} танков")
                 box.exec_()
 
             shootings = 0
