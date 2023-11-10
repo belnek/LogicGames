@@ -55,6 +55,7 @@ class Tank(QLabel):
 
     def tankClicked(self):
         print("asd")
+        print(self.isShooting)
         if not self.isShooting or self.shootsEstimated > 0:
             self.selected = not self._selected
             self.selectedNow.emit()

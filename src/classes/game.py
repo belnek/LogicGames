@@ -7,7 +7,7 @@ import traceback
 from PyQt5 import uic
 from PyQt5.QtCore import QPropertyAnimation, QPoint, QParallelAnimationGroup, QTimer, QSize, \
     QSequentialAnimationGroup, pyqtSignal, QThread
-from PyQt5.QtWidgets import QWidget, QMainWindow, QAction, QDialog
+from PyQt5.QtWidgets import QWidget, QMainWindow, QAction, QDialog, QMessageBox
 from math import *
 
 from src.classes.ShootFunnel import ShootFunnel
@@ -67,8 +67,8 @@ class Game(QMainWindow):
         finish = QAction("Quit", self)
 
         finish.triggered.connect(self.closeEvent)
-        self.playerTanks = [Tank(self) for i in range(30)]
-        self.AITanks = [Tank(self) for i in range(30)]
+        self.playerTanks = [Tank(self) for i in range(1)]
+        self.AITanks = [Tank(self) for i in range(1)]
         c = 0
         for i in self.playerTanks:
             i.init(300, 300, c)
@@ -296,32 +296,48 @@ class Game(QMainWindow):
             if shootings == 0 and len(self.AITanks) > 0:
 
                 if len(self.playerTanks) > 0:
-                    print(
+                    box = QMessageBox()
+                    box.setIcon(QMessageBox.Information)
+                    box.setText(
                         f"Игра окончена! У вас осталось {len(self.playerTanks)} танков и не осталось снярядов. У соперника осталось {len(self.AITanks)} танков")
 
+                    box.exec_()
             if len(self.AITanks) == 0:
-                print(f"Вы победили! Вы уничтожили все танки соперника. У вас осталось {len(self.playerTanks)} танков")
+                box = QMessageBox()
+                box.setIcon(QMessageBox.Information)
+                box.setText(f"Вы победили! Вы уничтожили все танки соперника. У вас осталось {len(self.playerTanks)} танков")
+                box.exec_()
+
             shootings = 0
             for tank in self.AITanks:
                 shootings += tank.shootsEstimated
             print("shoots AI - ", shootings)
 
             if shootings == 0:
-                print(
+                box = QMessageBox()
+                box.setIcon(QMessageBox.Information)
+                box.setText(
                     f"Вы победили! Соперник сдался, так как у него закончились снаряды. У вас осталось {len(self.playerTanks)} танков")
+                box.exec_()
             self.isPlayerTurn = False
 
             self.AITurn()
         else:
             if len(self.playerTanks) == 0:
-                print(f"Игра окончена! У вас не осталось танков. У соперника осталось {len(self.AITanks)} танков")
+                box = QMessageBox()
+                box.setIcon(QMessageBox.Information)
+                box.setText(f"Игра окончена! У вас не осталось танков. У соперника осталось {len(self.AITanks)} танков")
+                box.exec_()
             for tank in self.AITanks:
                 shootings += tank.shootsEstimated
             print("shoots AI - ", shootings)
 
             if shootings == 0:
-                print(
+                box = QMessageBox()
+                box.setIcon(QMessageBox.Information)
+                box.setText(
                     f"Вы победили! Соперник сдался, так как у него закончились снаряды. У вас осталось {len(self.playerTanks)} танков")
+                box.exec_()
             self.isPlayerTurn = True
 
     def tick(self, start, angleX):
@@ -379,6 +395,8 @@ class Game(QMainWindow):
             self.anim_group.start()
 
     def AITurn(self):
+        for p in self.playerTanks:
+            p.isShooting = True
         currentAITank = random.choice(self.AITanks)
         sh = currentAITank.shootsEstimated
         while sh == 0:
