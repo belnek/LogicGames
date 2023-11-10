@@ -1,10 +1,12 @@
 import os
 import random
+import threading
+import time
 import traceback
 
 from PyQt5 import uic
 from PyQt5.QtCore import QPropertyAnimation, QPoint, QParallelAnimationGroup, QTimer, QSize, \
-    QSequentialAnimationGroup, pyqtSignal
+    QSequentialAnimationGroup, pyqtSignal, QThread
 from PyQt5.QtWidgets import QWidget, QMainWindow, QAction, QDialog
 from math import *
 
@@ -14,7 +16,8 @@ from src.classes.Tank import Tank
 
 class Game(QMainWindow):
     loadingFinished = pyqtSignal()
-
+    setPlayerTanksComplete = pyqtSignal(list)
+    setAITanksComplete = pyqtSignal(list)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.anim_group = None
@@ -35,6 +38,7 @@ class Game(QMainWindow):
 
     def doShow(self):
         self.parentt = self.sender()
+        self.setParent(self.parentt)
         try:
             self.winAnimation.finished.disconnect(self.hide)
         except:
@@ -85,7 +89,6 @@ class Game(QMainWindow):
         self.playerTanks = {self.tank, self.tank1}'''
 
         self.setPlayersTanks()
-        self.setAITanks()
         # scaled_pixmap = pixmap.scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio
 
         self.verticalScroll.valueChanged.connect(self.on_value_vertical_changed)
@@ -93,7 +96,6 @@ class Game(QMainWindow):
         self.horizontalScroll.valueChanged.connect(self.on_value_horizontal_changed)
 
         self.shootButton.clicked.connect(lambda: self.makeShoot(self.currentTank))
-        self.loadingFinished.emit()
         # self.makeShoot((self.tank.x, self.tank.y), self.target).connect(lambda: self.boom(self.target))
 
     def closeEvent(self, event):
@@ -114,9 +116,25 @@ class Game(QMainWindow):
         self.lcdHorizontal.display(value)
 
     def setPlayersTanks(self):
-
         width = self.playerTanks[0].width()
         height = self.playerTanks[0].height()
+        self.setPlayerTanksComplete.connect(self.setPlayersTanksCompleteFunc)
+        threading.Thread(target=lambda: self.playersTanksWorker(width, height), daemon=True).start()
+
+    def setPlayersTanksCompleteFunc(self, newSegments):
+
+        c = 0
+
+        for tank in self.playerTanks:
+            tank.setting(*newSegments[c], tank.id)
+            c += 1
+            tank.selectedNow.connect(lambda: self.tankchanged())
+        self.setAITanksComplete.connect(self.setAITanksCompleteFunc)
+        threading.Thread(target=lambda: self.setAITanksWorker(self.AITanks[0].width(), self.AITanks[0].height()), daemon=True).start()
+
+
+    def playersTanksWorker(self, width, height):
+        time.sleep(1)
         segmentsx = int(660 / width)
         segmentsy = int((670 - 390) / height)
         listOfPotencialSegments = list()
@@ -149,19 +167,18 @@ class Game(QMainWindow):
             xx = i[0] * width
             yy = i[1] * height + 390
             newSegments.append((xx, yy))
+        self.setPlayerTanksComplete.emit(newSegments)
+
+    def setAITanksCompleteFunc(self, newSegments):
+
         c = 0
-        for tank in self.playerTanks:
+        for tank in self.AITanks:
             tank.setting(*newSegments[c], tank.id)
+            tank.rotate_180()
             c += 1
-            tank.selectedNow.connect(lambda: self.tankchanged())
-        self.setAITanks()
+        self.loadingFinished.emit()
 
-    def setAITanks(self):
-        print("s")
-        print("asfasf")
-
-        width = self.AITanks[0].width()
-        height = self.AITanks[0].height()
+    def setAITanksWorker(self, width, height):
         segmentsx = int(660 / width)
         segmentsy = int((360) / height)
         listOfPotencialSegments = list()
@@ -196,11 +213,7 @@ class Game(QMainWindow):
             xx = i[0] * width
             yy = i[1] * height
             newSegments.append((xx, yy))
-        c = 0
-        for tank in self.AITanks:
-            tank.setting(*newSegments[c], tank.id)
-            tank.rotate_180()
-            c += 1
+        self.setAITanksComplete.emit(newSegments)
 
     def tankchanged(self):
         tank = self.sender()

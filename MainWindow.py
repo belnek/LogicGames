@@ -101,21 +101,19 @@ class MainWin(QMainWindow):
         self.loadingDialog = LoadingDialog(self)
         self.loadingDialog.show()
         self.loading.connect(self.loadingComplete)
-        threading.Thread(target= lambda: self.loadingStarted(self), daemon=True).start()
-
+        self.loadingStarted(self)
         # self.loadingDialog.doShow()
 
         # self.hide()
 
     def loadingStarted(self, parent):
-        self.game = Game(parent)
+        self.game = Game(self)
         self.game.loadingFinished.connect(self.loading.emit)
         self.game.initUI()
 
     def loadingComplete(self):
         print("asd")
         self.loadingDialog.doClose()
-        self.game.setParent(self)
         print(self)
         self.game.show()
         self.game.doShow()

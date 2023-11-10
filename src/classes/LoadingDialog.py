@@ -13,17 +13,18 @@ class LoadingDialog(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        uipath = os.path.join(os.path.dirname(self.parent().path), "src/ui/loading.ui")
+        uipath = os.path.join(os.path.dirname(__file__), "../ui/loading.ui")
         uic.loadUi(uipath, self)
         self.setFixedSize(400, 300)
         showevent = QAction("Show", self)
         showevent.triggered.connect(self.showEvent)
         self.animation = QPropertyAnimation(self, b'windowOpacity')
         self.animation.setDuration(600)
-        gif = QMovie(os.path.join(os.path.dirname(self.parent().path), "src/images/loading.gif"))  # !!!
-        gif.setScaledSize(QSize(150, 150))
-        gif.start()
+        gif = QMovie(os.path.join(os.path.dirname(__file__), "loading.gif"))  # !!!
+        gif.setScaledSize(QSize(70, 70))
         self.loading.setMovie(gif)
+        gif.start()
+
         self.doShow()
 
     def doShow(self):

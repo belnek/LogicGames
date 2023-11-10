@@ -54,6 +54,7 @@ class Tank(QLabel):
         self.setPixmap(self.pixmap)
 
     def tankClicked(self):
+        print("asd")
         if not self.isShooting or self.shootsEstimated > 0:
             self.selected = not self._selected
             self.selectedNow.emit()
@@ -76,6 +77,7 @@ class Tank(QLabel):
         self.setPixmap(pixmap)
 
     def mousePressEvent(self, ev):
+        print("click")
         if self.isAlive and self.player:
             self.clicked.emit()
 
