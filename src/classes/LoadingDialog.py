@@ -3,7 +3,7 @@ import os
 from PyQt5 import uic
 from PyQt5.QtCore import QPropertyAnimation, QSize
 from PyQt5.QtGui import QMovie
-from PyQt5.QtWidgets import QDialog, QAction, QWidget, QMainWindow
+from PyQt5.QtWidgets import QDialog, QAction, QWidget, QMainWindow, QLabel
 from PyQt5.uic.properties import QtGui
 
 
@@ -23,7 +23,10 @@ class LoadingDialog(QMainWindow):
         gif = QMovie(os.path.join(os.path.dirname(__file__), "loading.gif"))  # !!!
         gif.setScaledSize(QSize(70, 70))
         self.loading.setMovie(gif)
+        self.l = QLabel(self)
+        self.l.setMovie(gif)
         gif.start()
+        gif.setParent(self)
 
         self.doShow()
 
