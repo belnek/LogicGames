@@ -2618,7 +2618,7 @@ QDateEdit::down-arrow:focus
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="description">
+      <widget class="QPushButton" name="descriptionButton">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -2643,7 +2643,7 @@ QDateEdit::down-arrow:focus
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="instruction">
+      <widget class="QPushButton" name="instructionButton">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -2668,7 +2668,7 @@ QDateEdit::down-arrow:focus
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="records">
+      <widget class="QPushButton" name="recordsButton">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -2707,13 +2707,13 @@ QDateEdit::down-arrow:focus
      <string/>
     </property>
     <property name="pixmap">
-     <pixmap resource="qrc.qrc">:/Images/logocompany2.png</pixmap>
+     <pixmap>:/Images/logocompany2.png</pixmap>
     </property>
    </widget>
   </widget>
  </widget>
  <resources>
-  <include location="qrc.qrc"/>
+  <include location="../../qrc.qrc"/>
  </resources>
  <connections/>
  <buttongroups>

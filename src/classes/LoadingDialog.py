@@ -22,7 +22,7 @@ class LoadingDialog(QMainWindow):
 
         self.animation = QPropertyAnimation(self, b'windowOpacity')
         self.animation.setDuration(600)
-        gif = QMovie(os.path.join(os.path.dirname(__file__), "loading.gif"))  # !!!
+        gif = QMovie(os.path.join(os.path.dirname(__file__), "../images/loading.gif"))  # !!!
         gif.setScaledSize(QSize(150, 150))
         self.loading.setMovie(gif)
         gif.start()

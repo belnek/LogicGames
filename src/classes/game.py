@@ -3,11 +3,14 @@ import random
 import threading
 import time
 import traceback
+import sqlite3
 
 from PyQt5 import uic
 from PyQt5.QtCore import QPropertyAnimation, QPoint, QParallelAnimationGroup, QTimer, QSize, \
-    QSequentialAnimationGroup, pyqtSignal, QThread
-from PyQt5.QtWidgets import QWidget, QMainWindow, QAction, QDialog, QMessageBox
+    QSequentialAnimationGroup, pyqtSignal, QThread, QUrl
+from PyQt5.QtGui import QFont, QFontDatabase
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent, QMediaPlaylist
+from PyQt5.QtWidgets import QWidget, QMainWindow, QAction, QDialog, QMessageBox, QInputDialog, QLineEdit
 from math import *
 
 from src.classes.ShootFunnel import ShootFunnel
@@ -18,6 +21,9 @@ class Game(QMainWindow):
     loadingFinished = pyqtSignal()
     setPlayerTanksComplete = pyqtSignal(list)
     setAITanksComplete = pyqtSignal(list)
+    rotateStartSignal = pyqtSignal()
+    rotateEndSignal = pyqtSignal()
+    rotateSignal = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -25,6 +31,7 @@ class Game(QMainWindow):
         self.anim = QPropertyAnimation(None, b"pos")
         self.anim2 = QPropertyAnimation(None, b"pos")
         self.winAnimation = QPropertyAnimation(self, b'windowOpacity')
+        self.con = sqlite3.connect(os.path.join(os.path.dirname(__file__), "../bases/records.db"))
 
         self.winAnimation.setDuration(600)
         self.g = 9.8
@@ -32,10 +39,60 @@ class Game(QMainWindow):
         self.currentTank = Tank()
         self.bullet = None
         self.mainWin = self
+        self.ttfId = QFontDatabase.addApplicationFont(os.path.join(os.path.dirname(__file__), "../ttf/minettf.ttf"))
+        self.family = QFontDatabase.applicationFontFamilies(self.ttfId)[0]
+        self.font().setFamily(self.family)
+        self.textFont = QFont(self.family)
+        self.textFont.setPixelSize(15)
+        self.playerShootsEstimated = 0
+        self.font().setFamily(self.family)
         self.playerTanks = list()
         self.AITanks = list()
         self.isPlayerTurn = True
         self.parentt = None
+        self.media_player = QMediaPlayer()
+        self.clickURL = QUrl.fromLocalFile(os.path.join(os.path.dirname(__file__), "../sounds/click.mp3"))
+        self.content = QMediaContent(self.clickURL)
+        self.media_player.setMedia(self.content)
+
+        self.shootPlayer = QMediaPlayer()
+        self.shootURL = QUrl.fromLocalFile(os.path.join(os.path.dirname(__file__), "../sounds/shootSound.mp3"))
+        self.shootContent = QMediaContent(self.shootURL)
+        self.shootPlayer.setMedia(self.shootContent)
+
+        self.hitPlayer = QMediaPlayer()
+        self.hitURL = QUrl.fromLocalFile(os.path.join(os.path.dirname(__file__), "../sounds/hitSound.mp3"))
+        self.hitContent = QMediaContent(self.hitURL)
+        self.hitPlayer.setMedia(self.hitContent)
+
+        self.notHitPlayer = QMediaPlayer()
+        self.notHitURL = QUrl.fromLocalFile(os.path.join(os.path.dirname(__file__), "../sounds/notHitSound.mp3"))
+        self.notHitContent = QMediaContent(self.notHitURL)
+        self.notHitPlayer.setMedia(self.notHitContent)
+
+        self.rotateStartPlayer = QMediaPlayer()
+        self.rotateStartUrl = QUrl.fromLocalFile(os.path.join(os.path.dirname(__file__), "../sounds/startRotate.mp3"))
+        self.rotateStartContent = QMediaContent(self.rotateStartUrl)
+        self.rotateStartPlayer.setMedia(self.rotateStartContent)
+        self.rotateStartPlayer.mediaStatusChanged.connect(self.rotateStartStatusChanged)
+
+        self.rotateEndPlayer = QMediaPlayer()
+        self.rotateEndUrl = QUrl.fromLocalFile(os.path.join(os.path.dirname(__file__), "../sounds/endRotate.mp3"))
+        self.rotateEndContent = QMediaContent(self.rotateEndUrl)
+        self.rotateEndPlayer.setMedia(self.rotateEndContent)
+        self.rotateEndPlayer.mediaStatusChanged.connect(self.rotateEndStatusChanged)
+
+
+        self.rotatePlaylist = QMediaPlaylist()
+        self.rotateUrl = QUrl.fromLocalFile(os.path.join(os.path.dirname(__file__), "../sounds/rotate.mp3"))
+        self.rotatePlaylist.addMedia(QMediaContent(self.rotateUrl))
+        self.rotatePlaylist.setPlaybackMode(QMediaPlaylist.Loop)
+
+        self.rotatePlayer = QMediaPlayer()
+        self.rotatePlayer.setPlaylist(self.rotatePlaylist)
+        self.rotatePlayer.mediaStatusChanged.connect(self.rotateStatusChanged)
+
+
         self.bb = False
 
     def doShow(self):
@@ -71,11 +128,11 @@ class Game(QMainWindow):
         self.setWindowTitle("Танковая битва")
 
         self.playerTanks = [Tank(self) for i in range(30)]
-        self.AITanks = [Tank(self) for i in range(30)]
+        self.AITanks = [Tank(self) for i in range(1)]
         c = 0
         for i in self.playerTanks:
             i.init(300, 300, c)
-
+            self.playerShootsEstimated += 3
             c += 1
 
         for i in self.AITanks:
@@ -104,6 +161,7 @@ class Game(QMainWindow):
     def closeEvent(self, event):
         print("skgoghasjklghsdfg")
         if not self.bb:
+            self.media_player.play()
             self.parent().showWin()
             self.doClose()
             event.ignore()
@@ -253,6 +311,34 @@ class Game(QMainWindow):
 
         return isTank, shootedTank
 
+    def addToBase(self, name, points: int, shootings: int):
+        cur = self.con.cursor()
+        cur.execute("INSERT INTO records (name, shootings, points) VALUES (?, ?, ?)",
+                    (name, str(shootings), str(points)))
+        self.con.commit()
+        box = QMessageBox()
+        box.setIcon(QMessageBox.Information)
+        box.setWindowTitle("Рекорды")
+        box.setText(
+            "Рекорд записан.")
+        box.exec_()
+        self.close()
+
+    def record(self, points, shootings):
+        box = QMessageBox(self)
+        box.setFont(self.textFont)
+        userResponse = box.question(self, 'Рекорды', "Желаете внести свой результат в таблицу рекордов?",
+                                    QMessageBox.Yes | QMessageBox.No)
+        if userResponse == QMessageBox.Yes:
+            text, pressed = QInputDialog.getText(self, "Рекорды", "Введите имя для внесения в таблицу",
+                                                 QLineEdit.Normal)
+            if pressed:
+                self.addToBase(text, points, 90 - shootings)
+            else:
+                self.close()
+        else:
+            self.close()
+
     def boom(self, bullet: QWidget):
         isTank, shootedTank = self.checkHit(bullet)
         if isTank:
@@ -264,20 +350,25 @@ class Game(QMainWindow):
                 self.AITanks.remove(shootedTank)
             self.layout().removeWidget(bullet)
             print(len(self.playerTanks), len(self.AITanks))
+            self.hitPlayer.stop()
+            self.hitPlayer.play()
             bullet.deleteLater()
 
             bullet.destroy(True)
+            time.sleep(0.5)
         else:
             funnel = ShootFunnel(self)
             funnel.init(bullet.x() - int(bullet.width()), bullet.y())
             self.layout().addWidget(funnel)
             funnel.show()
             self.layout().removeWidget(bullet)
+            self.notHitPlayer.stop()
+            self.notHitPlayer.play()
             bullet.deleteLater()
 
             bullet.destroy(True)
-        for tank in self.playerTanks:
-            tank.isShooting = False
+            time.sleep(0.5)
+
         self.currentTank.selected = False
         if self.currentTank == shootedTank:
             self.currentTank.shooted()
@@ -291,60 +382,91 @@ class Game(QMainWindow):
         shootings = 0
         playerTanks = 0
         print("Turn - ", self.isPlayerTurn)
+        gameEnd = False
         if self.isPlayerTurn:
             self.widget.hide()
             for tank in self.playerTanks:
                 shootings += tank.shootsEstimated
             print("shoots Player - ", shootings)
-            if shootings == 0 and len(self.AITanks) > 0:
+            if self.playerShootsEstimated == 0 and len(self.AITanks) > 0:
 
                 if len(self.playerTanks) > 0:
                     box = QMessageBox()
                     box.setIcon(QMessageBox.Information)
+                    box.setWindowTitle("Игра окончена.")
                     box.setText(
                         f"Игра окончена! У вас осталось {len(self.playerTanks)} танков и не осталось снярядов. У соперника осталось {len(self.AITanks)} танков")
+                    gameEnd = True
+                    box.setFont(self.textFont)
 
                     box.exec_()
-            if len(self.AITanks) == 0:
+                    self.close()
+            if len(self.AITanks) == 0 and not gameEnd:
                 box = QMessageBox()
                 box.setIcon(QMessageBox.Information)
+                box.setWindowTitle("Игра окончена.")
                 box.setText(
                     f"Вы победили! Вы уничтожили все танки соперника. У вас осталось {len(self.playerTanks)} танков")
+                gameEnd = True
+                box.setFont(self.textFont)
                 box.exec_()
+                self.record(len(self.playerTanks), self.playerShootsEstimated)
 
-            shootings = 0
+            shootingsAI = 0
             for tank in self.AITanks:
-                shootings += tank.shootsEstimated
+                shootingsAI += tank.shootsEstimated
             print("shoots AI - ", shootings)
 
-            if shootings == 0:
+            if shootingsAI == 0 and not gameEnd:
                 box = QMessageBox()
                 box.setIcon(QMessageBox.Information)
+                box.setFont(self.textFont)
+                box.setWindowTitle("Игра окончена.")
+                gameEnd = True
                 box.setText(
                     f"Вы победили! Соперник сдался, так как у него закончились снаряды. У вас осталось {len(self.playerTanks)} танков")
                 box.exec_()
-            self.isPlayerTurn = False
+                self.record(len(self.playerTanks), self.playerShootsEstimated)
+            if not gameEnd:
+                self.isPlayerTurn = False
 
-            self.AITurn()
+                self.AITurn()
         else:
-            if len(self.playerTanks) == 0:
+            for tank in self.playerTanks:
+                shootings += tank.shootsEstimated
+            if len(self.playerTanks) == 0 and not gameEnd:
                 box = QMessageBox()
                 box.setIcon(QMessageBox.Information)
+                box.setFont(self.textFont)
+                box.setWindowTitle("Игра окончена.")
+                gameEnd = True
                 box.setText(f"Игра окончена! У вас не осталось танков. У соперника осталось {len(self.AITanks)} танков")
                 box.exec_()
+                self.close()
+            shootingsAI = 0
             for tank in self.AITanks:
-                shootings += tank.shootsEstimated
+                shootingsAI += tank.shootsEstimated
             print("shoots AI - ", shootings)
 
-            if shootings == 0:
+            if shootingsAI == 0 and not gameEnd:
                 box = QMessageBox()
                 box.setIcon(QMessageBox.Information)
+                box.setFont(self.textFont)
+                box.setWindowTitle("Игра окончена.")
+                gameEnd = True
                 box.setText(
                     f"Вы победили! Соперник сдался, так как у него закончились снаряды. У вас осталось {len(self.playerTanks)} танков")
                 box.exec_()
+                self.record(len(self.playerTanks), self.playerShootsEstimated)
             self.isPlayerTurn = True
+            for tank in self.playerTanks:
+                tank.isShooting = False
 
     def tick(self, start, angleX):
+        try:
+            self.rotateStartSignal.disconnect()
+        except Exception:
+            pass
 
         if self.currentTank.angleX != angleX:
             if angleX > self.currentTank.angleX:
@@ -355,18 +477,13 @@ class Game(QMainWindow):
                 self.currentTank.rotate(-1)
                 self.currentTank.angleX -= 1
                 QTimer.singleShot(50, lambda: self.tick(start, angleX))
-            else:
-                if self.currentTank.angleX > 0:
-                    self.currentTank.rotate(-1)
-                    self.currentTank.angleX -= 1
-                    QTimer.singleShot(50, lambda: self.tick(start, angleX))
-                else:
-                    self.currentTank.rotate(1)
-                    self.currentTank.angleX += 1
-                    QTimer.singleShot(50, lambda: self.tick(start, angleX))
-            print(self.currentTank.angleX, angleX)
 
+            print(self.currentTank.angleX, angleX)
+            print("123123123123")
         else:
+            self.rotatePlayer.stop()
+            self.rotateEndPlayer.play()
+            time.sleep(0.5)
             self.currentTank.shootsEstimated -= 1
             self.bullet = QWidget(self)
             self.bullet.setStyleSheet("background-color:black;border-radius:5px;")
@@ -396,6 +513,8 @@ class Game(QMainWindow):
             self.anim_group2.addAnimation(self.anim3)
             self.anim_group.addAnimation(self.anim)
             self.anim_group.addAnimation(self.anim_group2)
+            self.shootPlayer.stop()
+            self.shootPlayer.play()
             self.anim_group.start()
 
     def AITurn(self):
@@ -441,8 +560,8 @@ class Game(QMainWindow):
                     self.AITurn()
                     return
                 print(res)
-
-            QTimer.singleShot(50, lambda: self.tick(self.currentTank, angleX))
+            self.rotateStartPlayer.play()
+            self.rotateStartSignal.connect(lambda: QTimer.singleShot(50, lambda: self.tick(self.currentTank, angleX)))
 
         else:
             angleX = 180 + random.randint(-90, 90)
@@ -469,8 +588,8 @@ class Game(QMainWindow):
                 bull.move(int(x), int(y))
                 res, _ = self.checkHit(bull)
                 print(res)
-
-            QTimer.singleShot(50, lambda: self.tick(self.currentTank, angleX))
+            self.rotateStartPlayer.play()
+            self.rotateStartSignal.connect(lambda: QTimer.singleShot(50, lambda: self.tick(self.currentTank, angleX)))
 
     def makeShoot(self, start):
 
@@ -481,7 +600,23 @@ class Game(QMainWindow):
                     t.isShooting = True
                 self.currentTank.angleY = self.verticalScroll.value()
                 self.widget.hide()
-                QTimer.singleShot(50, lambda: self.tick(start, self.horizontalScroll.value()))
+                self.playerShootsEstimated -= 1
+                self.rotateStartPlayer.play()
+                self.rotateStartSignal.connect(
+                    lambda: QTimer.singleShot(50, lambda: self.tick(start, self.horizontalScroll.value())))
+
+    def rotateStartStatusChanged(self, status):
+        if status == QMediaPlayer.EndOfMedia:
+            self.rotateStartSignal.emit()
+            self.rotatePlayer.play()
+
+    def rotateStatusChanged(self, status):
+        if status == QMediaPlayer.EndOfMedia:
+            self.rotateSignal.emit()
+
+    def rotateEndStatusChanged(self, status):
+        if status == QMediaPlayer.EndOfMedia:
+            self.rotateEndSignal.emit()
 
     def solveTargetXY(self, start, speed, angleY, angleX):
         sx = start.x

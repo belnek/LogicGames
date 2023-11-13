@@ -1,7 +1,8 @@
 import os
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QUrl
 from PyQt5.QtGui import QImage, QPixmap, QTransform
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtWidgets import QLabel
 
 
@@ -29,6 +30,10 @@ class Tank(QLabel):
         self.shootsEstimated = 3
         self.isInit = True
         self.id = idd
+        self.media_player = QMediaPlayer()
+        self.clickURL = QUrl.fromLocalFile(os.path.join(os.path.dirname(__file__), "../sounds/tankClick.mp3"))
+        self.content = QMediaContent(self.clickURL)
+        self.media_player.setMedia(self.content)
         self.clicked.connect(lambda: self.tankClicked())
 
     def setting(self, x, y, idd):
@@ -56,7 +61,9 @@ class Tank(QLabel):
     def tankClicked(self):
         print("asd")
         print(self.isShooting)
-        if not self.isShooting or self.shootsEstimated > 0:
+        if not self.isShooting and self.shootsEstimated > 0:
+            self.media_player.stop()
+            self.media_player.play()
             self.selected = not self._selected
             self.selectedNow.emit()
 
