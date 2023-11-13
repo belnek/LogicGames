@@ -128,7 +128,7 @@ class Game(QMainWindow):
         self.setWindowTitle("Танковая битва")
 
         self.playerTanks = [Tank(self) for i in range(30)]
-        self.AITanks = [Tank(self) for i in range(1)]
+        self.AITanks = [Tank(self) for i in range(30)]
         c = 0
         for i in self.playerTanks:
             i.init(300, 300, c)
