@@ -86,24 +86,24 @@ class MainWin(QMainWindow):
 
     def recordsButtonPressed(self):
         self.media_player.play()
-        records = Records(self)
-        records.doShow()
+        self.records = Records(self)
+        self.records.doShow()
         self.doClose()
-        records.show()
+        self.records.show()
 
     def descriptionButtonPressed(self):
         self.media_player.play()
-        description = Description(self)
-        description.doShow()
+        self.description = Description(self)
+        self.description.doShow()
         self.doClose()
-        description.show()
+        self.description.show()
 
     def instructionButtonPressed(self):
         self.media_player.play()
-        instruction = Instruction(self)
-        instruction.doShow()
+        self.instruction = Instruction(self)
+        self.instruction.doShow()
         self.doClose()
-        instruction.show()
+        self.instruction.show()
 
     def doCloseStart(self):
         self.media_player.play()
@@ -138,6 +138,30 @@ class MainWin(QMainWindow):
         if not self.bb:
             self.bb = True
             self.media_player.play()
+            try:
+                self.records.close()
+            except Exception:
+                pass
+
+            try:
+                self.instruction.close()
+            except Exception:
+                pass
+
+            try:
+                self.description.close()
+            except Exception:
+                pass
+
+            try:
+                self.game.close()
+            except Exception:
+                pass
+
+            try:
+                self.loadingDialog.close()
+            except Exception:
+                pass
 
             self.doCloseAll()
             event.ignore()
