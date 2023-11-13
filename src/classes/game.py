@@ -159,7 +159,6 @@ class Game(QMainWindow):
         # self.makeShoot((self.tank.x, self.tank.y), self.target).connect(lambda: self.boom(self.target))
 
     def closeEvent(self, event):
-        print("skgoghasjklghsdfg")
         if not self.bb:
             self.media_player.play()
             self.parent().showWin()
@@ -217,7 +216,6 @@ class Game(QMainWindow):
                 j += jj
                 listOfPotencialSegments.append((i, j))
         listOfPotencialSegments = list(set(listOfPotencialSegments))
-        print(listOfPotencialSegments)
         n = len(self.playerTanks)
         random.seed(random.randint(0, 10000000))
 
@@ -243,7 +241,6 @@ class Game(QMainWindow):
         segmentsx = int(660 / width)
         segmentsy = int((360) / height)
         listOfPotencialSegments = list()
-        print("s")
         for i in range(segmentsx):
             random.seed(random.randint(0, 10000000))
 
@@ -261,13 +258,11 @@ class Game(QMainWindow):
 
                 j += jj
                 listOfPotencialSegments.append((i, j))
-        print(len(listOfPotencialSegments))
         listOfPotencialSegments = list(set(listOfPotencialSegments))
         n = len(self.AITanks)
         random.seed(random.randint(0, 10000000))
 
         segments = random.sample(listOfPotencialSegments, n)
-        print(segments)
 
         newSegments = list(tuple())
         for i in segments:
@@ -282,7 +277,6 @@ class Game(QMainWindow):
         if self.currentTank.isInit:
             self.currentTank.selected = not self.currentTank.selected
         self.currentTank = tank
-        print(self.currentTank.x, self.currentTank.y)
         self.horizontalScroll.setValue(int(self.currentTank.angleX))
         self.lcdHorizontal.display(self.currentTank.angleX)
         self.verticalScroll.setValue(int(self.currentTank.angleY))
@@ -349,7 +343,6 @@ class Game(QMainWindow):
             else:
                 self.AITanks.remove(shootedTank)
             self.layout().removeWidget(bullet)
-            print(len(self.playerTanks), len(self.AITanks))
             self.hitPlayer.stop()
             self.hitPlayer.play()
             bullet.deleteLater()
@@ -381,13 +374,11 @@ class Game(QMainWindow):
         self.lcdVertical.display(0)
         shootings = 0
         playerTanks = 0
-        print("Turn - ", self.isPlayerTurn)
         gameEnd = False
         if self.isPlayerTurn:
             self.widget.hide()
             for tank in self.playerTanks:
                 shootings += tank.shootsEstimated
-            print("shoots Player - ", shootings)
             if self.playerShootsEstimated == 0 and len(self.AITanks) > 0:
 
                 if len(self.playerTanks) > 0:
@@ -415,7 +406,6 @@ class Game(QMainWindow):
             shootingsAI = 0
             for tank in self.AITanks:
                 shootingsAI += tank.shootsEstimated
-            print("shoots AI - ", shootings)
 
             if shootingsAI == 0 and not gameEnd:
                 box = QMessageBox()
@@ -446,7 +436,6 @@ class Game(QMainWindow):
             shootingsAI = 0
             for tank in self.AITanks:
                 shootingsAI += tank.shootsEstimated
-            print("shoots AI - ", shootings)
 
             if shootingsAI == 0 and not gameEnd:
                 box = QMessageBox()
@@ -478,8 +467,6 @@ class Game(QMainWindow):
                 self.currentTank.angleX -= 1
                 QTimer.singleShot(50, lambda: self.tick(start, angleX))
 
-            print(self.currentTank.angleX, angleX)
-            print("123123123123")
         else:
             self.rotatePlayer.stop()
             self.rotateEndPlayer.play()
@@ -526,7 +513,6 @@ class Game(QMainWindow):
             currentAITank = random.choice(self.AITanks)
             sh = currentAITank.shootsEstimated
         isHitNum = random.randint(0, 100)
-        print(isHitNum)
         if isHitNum >= 20:
             recurs = 0
             angleX = random.randint(-90, 90)
@@ -541,7 +527,6 @@ class Game(QMainWindow):
             x, y, _, __ = self.solveTargetXY(bull, self.shootSpeed, angleY, angleX)
             bull.move(int(x), int(y))
             res, _ = self.checkHit(bull)
-            print(res)
             while not res:
                 recurs += 1
                 angleX = 180 + random.randint(-90, 90)
@@ -559,7 +544,6 @@ class Game(QMainWindow):
                 if recurs > 2000:
                     self.AITurn()
                     return
-                print(res)
             self.rotateStartPlayer.play()
             self.rotateStartSignal.connect(lambda: QTimer.singleShot(50, lambda: self.tick(self.currentTank, angleX)))
 
@@ -587,7 +571,6 @@ class Game(QMainWindow):
                 x, y, _, __ = self.solveTargetXY(bull, self.shootSpeed, angleY, angleX)
                 bull.move(int(x), int(y))
                 res, _ = self.checkHit(bull)
-                print(res)
             self.rotateStartPlayer.play()
             self.rotateStartSignal.connect(lambda: QTimer.singleShot(50, lambda: self.tick(self.currentTank, angleX)))
 

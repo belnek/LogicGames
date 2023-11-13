@@ -134,7 +134,6 @@ class MainWin(QMainWindow):
 
     def closeEvent(self, event):
 
-        print("skgoghasjklghsdfg")
         if not self.bb:
             self.bb = True
             self.media_player.play()
