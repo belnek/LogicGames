@@ -305,6 +305,27 @@ class Game(QMainWindow):
 
         return isTank, shootedTank
 
+    def checkBoomHit(self, pos):
+        shootedTank = Tank(self)
+        ul = pos.geometry().topLeft()
+        br = pos.geometry().bottomRight()
+        isTank = False
+        for tank in self.AITanks:
+            ult = tank.geometry().topLeft()
+            brt = tank.geometry().bottomRight()
+            if ult.x() <= ul.x() <= brt.x() and ult.y() <= ul.y() <= brt.y() and ult.x() <= br.x() <= brt.x() and ult.y() <= br.y() <= brt.y():
+                isTank = True
+                shootedTank = tank
+
+        for tank in self.playerTanks:
+            ult = tank.geometry().topLeft()
+            brt = tank.geometry().bottomRight()
+            if ult.x() <= ul.x() <= brt.x() and ult.y() <= ul.y() <= brt.y() and ult.x() <= br.x() <= brt.x() and ult.y() <= br.y() <= brt.y():
+                isTank = True
+                shootedTank = tank
+
+        return isTank, shootedTank
+
     def addToBase(self, name, points: int, shootings: int):
         cur = self.con.cursor()
         cur.execute("INSERT INTO records (name, shootings, points) VALUES (?, ?, ?)",
@@ -334,7 +355,7 @@ class Game(QMainWindow):
             self.close()
 
     def boom(self, bullet: QWidget):
-        isTank, shootedTank = self.checkHit(bullet)
+        isTank, shootedTank = self.checkBoomHit(bullet)
         if isTank:
 
             shootedTank.shooted()
@@ -379,7 +400,7 @@ class Game(QMainWindow):
             self.widget.hide()
             for tank in self.playerTanks:
                 shootings += tank.shootsEstimated
-            if self.playerShootsEstimated == 0 and len(self.AITanks) > 0:
+            if shootings == 0 and len(self.AITanks) > 0:
 
                 if len(self.playerTanks) > 0:
                     box = QMessageBox()
