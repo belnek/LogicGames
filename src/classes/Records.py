@@ -3,7 +3,7 @@ import sqlite3
 
 from PyQt5 import uic
 from PyQt5.QtCore import QPropertyAnimation, QUrl
-from PyQt5.QtGui import QFontDatabase, QFont
+from PyQt5.QtGui import QFontDatabase, QFont, QIcon
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtWidgets import QMainWindow, QAction, QTableWidgetItem, QHeaderView, QAbstractItemView
 
@@ -19,6 +19,8 @@ class Records(QMainWindow):
         uipath = os.path.join(os.path.dirname(__file__), "../ui/records.ui")
         uic.loadUi(uipath, self)
         self.setFixedSize(800, 600)
+        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../ico.ico")))
+
         self.con = sqlite3.connect(os.path.join(os.path.dirname(__file__), "../bases/records.db"))
 
         showevent = QAction("Show", self)

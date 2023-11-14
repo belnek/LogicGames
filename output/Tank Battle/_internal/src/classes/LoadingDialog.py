@@ -2,7 +2,7 @@ import os
 
 from PyQt5 import uic
 from PyQt5.QtCore import QPropertyAnimation, QSize
-from PyQt5.QtGui import QMovie
+from PyQt5.QtGui import QMovie, QIcon
 from PyQt5.QtWidgets import QDialog, QAction, QWidget, QMainWindow, QLabel
 from PyQt5.uic.properties import QtGui
 
@@ -16,6 +16,8 @@ class LoadingDialog(QMainWindow):
         uipath = os.path.join(os.path.dirname(__file__), "../ui/loading.ui")
         uic.loadUi(uipath, self)
         self.setFixedSize(400, 300)
+        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../ico.ico")))
+
         showevent = QAction("Show", self)
         showevent.triggered.connect(self.showEvent)
         self.setWindowTitle("Загрузка...")

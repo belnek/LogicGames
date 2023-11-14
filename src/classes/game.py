@@ -8,7 +8,7 @@ import sqlite3
 from PyQt5 import uic
 from PyQt5.QtCore import QPropertyAnimation, QPoint, QParallelAnimationGroup, QTimer, QSize, \
     QSequentialAnimationGroup, pyqtSignal, QThread, QUrl
-from PyQt5.QtGui import QFont, QFontDatabase
+from PyQt5.QtGui import QFont, QFontDatabase, QIcon
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent, QMediaPlaylist
 from PyQt5.QtWidgets import QWidget, QMainWindow, QAction, QDialog, QMessageBox, QInputDialog, QLineEdit
 from math import *
@@ -123,6 +123,8 @@ class Game(QMainWindow):
         uic.loadUi(uipath, self)
 
         self.setFixedSize(727, 886)
+        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../ico.ico")))
+
         finish = QAction("Quit", self)
         finish.triggered.connect(self.closeEvent)
         self.setWindowTitle("Танковая битва")

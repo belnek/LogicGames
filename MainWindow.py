@@ -5,7 +5,7 @@ import traceback
 
 from PyQt5 import uic
 from PyQt5.QtCore import QPropertyAnimation, pyqtSignal, QUrl
-from PyQt5.QtGui import QFontDatabase, QFont, QPixmap
+from PyQt5.QtGui import QFontDatabase, QFont, QPixmap, QIcon
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtWidgets import QMainWindow, QApplication, QAction
 
@@ -28,6 +28,8 @@ class MainWin(QMainWindow):
         uipath = os.path.join(os.path.dirname(__file__), "src/ui/main.ui")
         uic.loadUi(uipath, self)
         self.setFixedSize(727, 886)
+        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "src/ico.ico")))
+
         showevent = QAction("Show", self)
         showevent.triggered.connect(self.showEvent)
         self.setWindowTitle("Танковая битва")

@@ -3,12 +3,12 @@ import sqlite3
 
 from PyQt5 import uic
 from PyQt5.QtCore import QPropertyAnimation, QUrl
-from PyQt5.QtGui import QFontDatabase, QFont
+from PyQt5.QtGui import QFontDatabase, QFont, QIcon
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtWidgets import QMainWindow, QAction, QTableWidgetItem, QHeaderView, QAbstractItemView
 
 
-class Instruction(QMainWindow):
+class Records(QMainWindow):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -16,9 +16,11 @@ class Instruction(QMainWindow):
         self.path = __file__
 
     def initUI(self):
-        uipath = os.path.join(os.path.dirname(__file__), "../ui/instruction.ui")
+        uipath = os.path.join(os.path.dirname(__file__), "../ui/records.ui")
         uic.loadUi(uipath, self)
         self.setFixedSize(800, 600)
+        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../ico.ico")))
+
         self.con = sqlite3.connect(os.path.join(os.path.dirname(__file__), "../bases/records.db"))
 
         showevent = QAction("Show", self)
@@ -32,16 +34,18 @@ class Instruction(QMainWindow):
         self.family = QFontDatabase.applicationFontFamilies(self.ttfId)[0]
         self.font().setFamily(self.family)
         self.textFont = QFont(self.family)
-        self.textFont.setPixelSize(16)
-        self.dFont = QFont(self.family)
-        self.dFont.setPixelSize(15)
-        self.label.setFont(self.textFont)
-        self.text.setFont(self.dFont)
+        self.textFont.setPixelSize(18)
+        self.recordsFont = QFont(self.family)
+        self.recordsFont.setPixelSize(15)
+        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.table.setFont(self.recordsFont)
+        self.label_2.setFont(self.textFont)
         self.media_player = QMediaPlayer()
         self.clickURL = QUrl.fromLocalFile(os.path.join(os.path.dirname(__file__), "../sounds/click.mp3"))
         self.content = QMediaContent(self.clickURL)
         self.media_player.setMedia(self.content)
         self.bb = False
+        self.getFromBase()
 
     def doShow(self):
         print("a")
@@ -74,11 +78,29 @@ class Instruction(QMainWindow):
         print("skgoghasjklghsdfg")
         if not self.bb:
             self.media_player.play()
-
             self.parent().showWin()
             self.doClose()
             event.ignore()
         else:
             event.accept()
 
-
+    def getFromBase(self):
+        cur = self.con.cursor()
+        res = cur.execute("""SELECT name, shootings, points 
+        FROM records 
+        ORDER BY shootings ASC, points DESC""").fetchall()
+        self.table.setColumnCount(3)
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+        self.table.setHorizontalHeaderItem(0, QTableWidgetItem("Имя игрока"))
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        self.table.setHorizontalHeaderItem(1, QTableWidgetItem("Кол-во совершенных выстрелов"))
+        header.setSectionResizeMode(2, QHeaderView.Stretch)
+        self.table.setHorizontalHeaderItem(2, QTableWidgetItem("Оставшиеся танки"))
+        self.table.setRowCount(0)
+        for i, row in enumerate(res):
+            self.table.setRowCount(
+                self.table.rowCount() + 1)
+            for j, elem in enumerate(row):
+                self.table.setItem(
+                    i, j, QTableWidgetItem(str(elem)))
